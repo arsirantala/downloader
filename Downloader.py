@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import atexit
 import datetime
 import hashlib
@@ -12,6 +14,7 @@ import urllib2
 from _socket import timeout
 from sys import platform
 from shutil import copyfile
+import argparse
 
 
 class Utility:
@@ -34,12 +37,12 @@ class Downloader:
         self.stop_down = False
         self.thread = None
 
-    def download(self, url, dest, sha1):
+    def download(self, url, old_file_path, new_file_base_name, old_file_sha1_value):
 
-        self.thread = threading.Thread(target=self.__down, args=(url, dest, sha1))
+        self.thread = threading.Thread(target=self.__down, args=(url, old_file_path, new_file_base_name, old_file_sha1_value))
         self.thread.start()
 
-    def __down(self, url, dest, sha1):
+    def __down(self, url, old_file_path, new_file_base_name, old_file_sha1_value):
         util = Utility()
         logging.info("Starting downloading...")
 
@@ -60,13 +63,13 @@ class Downloader:
             was_found = True
             size = long(handler.headers['content-length'])
 
-        filepath = dest + ".new"
+        downloaded_file_name = new_file_base_name + ".new"
 
         util = Utility()
 
-        print "Downloading to: " + filepath + "..."
+        print "Downloading to: " + downloaded_file_name + "..."
 
-        self.fp = open(filepath, "wb+")
+        self.fp = open(downloaded_file_name, "wb+")
 
         file_size_dl = 0
         block_sz = 8192
@@ -114,19 +117,19 @@ class Downloader:
         handler.close()  # if download is stopped the handler should be closed
         self.fp.close()  # if download is stopped the file should be closed
 
-        if os.path.exists(filepath) and os.path.exists(dest):
-            sha1_new = hashlib.sha1(filepath).hexdigest()
-            if sha1 != sha1_new:
+        if os.path.exists(downloaded_file_name) and os.path.exists(old_file_path):
+            dled_file_sha1_value = hashlib.sha1(downloaded_file_name).hexdigest()
+            if old_file_sha1_value != dled_file_sha1_value:
                 print "The sha1 values differ, the downloaded file is different than the other"
-                copyfile(filepath, dest)
+                copyfile(downloaded_file_name, old_file_path)
             else:
                 print "Sha1 values are the same - files are the same"
         else:
-            copyfile(filepath, dest)
+            copyfile(downloaded_file_name, old_file_path)
 
-        if os.path.exists(filepath):
+        if os.path.exists(downloaded_file_name):
             # Remove downloaded file
-            os.remove(filepath)
+            os.remove(downloaded_file_name)
 
         if not self.stop_down:
             logging.info("File was downloaded")
@@ -137,15 +140,23 @@ class Downloader:
         self.stop_down = True
 
 
-dest = "highwind.filter"
-tmpdir = os.path.dirname(os.path.realpath(sys.argv[0]))
-filepath = tmpdir + '/' + dest
-sha1_value = None
+parser = argparse.ArgumentParser(
+    description="Downloads file from given url. Compares sha1 value of downloaded file to sha1 value of old file and the values differ, the new file replaces the old file.")
+parser.add_argument("-old_file", "--old_file", help="Location of existing old file", required=True,
+                    dest="old_file", metavar="<Location for for old file>")
+parser.add_argument("-new_file", "--new_file", help="Base name of the new file", required=True,
+                    dest="new_file", metavar="<Basename for new file>")
+parser.add_argument("-download_url", "--download_url", help="Download url", required=True,
+                    dest="download_url", metavar="<Download url>")
+args = parser.parse_args()
 
-if os.path.exists(filepath):
+old_file_path = os.path.dirname(os.path.realpath(sys.argv[0])) + '/' + args.old_file
+old_file_sha1_value = None
+
+if os.path.exists(old_file_path):
     # calculate sha1
-    sha1_value = hashlib.sha1(filepath).hexdigest()
-    print sha1_value
+    old_file_sha1_value = hashlib.sha1(old_file_path).hexdigest()
+    print "Sha1 value for old file: %s" % str(old_file_sha1_value)
 
 down = Downloader()
-down.download("https://pastebin.com/raw/k5q2b570", filepath, sha1_value)
+down.download(args.download_url, old_file_path, args.new_file, old_file_sha1_value)
