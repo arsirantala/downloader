@@ -57,8 +57,8 @@ class Downloader:
 
         was_found = False
         if "Content-Length" not in handler.headers:
-            print "Content-Length can't be found in the headers!"
-            logging.error("Content-Length can't be found in the headers!")
+            print "Content-Length can't be found in the headers. Can't show download progress"
+            logging.info("Content-Length can't be found in the headers. Can't show download progress")
         else:
             was_found = True
             size = long(handler.headers['content-length'])
@@ -119,12 +119,14 @@ class Downloader:
 
         if os.path.exists(downloaded_file_name) and os.path.exists(old_file_path):
             dled_file_sha1_value = hashlib.sha1(downloaded_file_name).hexdigest()
+            print "Sha1 for the downloaded file: %s" % dled_file_sha1_value
             if old_file_sha1_value != dled_file_sha1_value:
-                print "The sha1 values differ, the downloaded file is different than the other"
+                print "The sha1 values differ, the downloaded file is different than the other. Replacing old file with downloaded file"
                 copyfile(downloaded_file_name, old_file_path)
             else:
                 print "Sha1 values are the same - files are the same"
         else:
+            print "Renaming downloaded file %s with old filename: %s" % (downloaded_file_name, old_file_path)
             copyfile(downloaded_file_name, old_file_path)
 
         if os.path.exists(downloaded_file_name):
@@ -135,6 +137,8 @@ class Downloader:
             logging.info("File was downloaded")
         else:
             logging.info("Download was stopped by user")
+
+        print "All done."
 
     def cancel(self):
         self.stop_down = True
