@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 
-import atexit
 import datetime
 import hashlib
-import httplib
 import logging
 import os
-import sys
-import tempfile
 import threading
-import time
 import urllib2
 from _socket import timeout
-from sys import platform
 from shutil import copyfile
 import argparse
 
@@ -68,8 +62,7 @@ class Downloader:
 
         was_found = False
         if "Content-Length" not in handler.headers:
-            print "Content-Length can't be found in the headers. Can't show download progress"
-            logging.info("Content-Length can't be found in the headers. Can't show download progress")
+            print "\n(Content-Length can't be found in the headers. Can't show download progress)"
         else:
             was_found = True
             size = long(handler.headers['content-length'])
@@ -78,7 +71,7 @@ class Downloader:
 
         util = Utility()
 
-        print "Downloading to: " + downloaded_file_name + "..."
+        print "\nDownloading to: %s..." % downloaded_file_name
 
         self.fp = open(downloaded_file_name, "wb+")
 
@@ -130,14 +123,14 @@ class Downloader:
 
         if os.path.exists(downloaded_file_name) and os.path.exists(old_file_path):
             dled_file_sha1_value = util.calculate_sha1(downloaded_file_name)
-            print "Sha1 for the downloaded file: %s" % dled_file_sha1_value
+            print "\nSha1 for the downloaded file: %s" % dled_file_sha1_value
             if old_file_sha1_value != dled_file_sha1_value:
-                print "The sha1 values differ, the downloaded file is different than the other. Replacing old file with downloaded file"
+                print "\nThe content of the files differ - replacing old file with downloaded file"
                 copyfile(downloaded_file_name, old_file_path)
             else:
-                print "Sha1 values are the same - files are the same (not replacing the old file with downloaded one)"
+                print "\nFiles are identical - not replacing the old file with downloaded one"
         else:
-            print "Renaming downloaded file %s with old filename: %s" % (downloaded_file_name, old_file_path)
+            print "\nRenaming downloaded file %s with old filename: %s" % (downloaded_file_name, old_file_path)
             copyfile(downloaded_file_name, old_file_path)
 
         if os.path.exists(downloaded_file_name):
@@ -149,7 +142,8 @@ class Downloader:
         else:
             logging.info("Download was stopped by user")
 
-        print "All done."
+        print "\nAll done."
+        raw_input("Press Enter to continue...")
 
     def cancel(self):
         self.stop_down = True
@@ -170,7 +164,7 @@ old_file_sha1_value = None
 if os.path.exists(args.old_file):
     util = Utility()
     old_file_sha1_value = util.calculate_sha1(args.old_file)
-    print "Sha1 value for old file: %s" % str(old_file_sha1_value)
+    print "\nSha1 value for old file: %s" % str(old_file_sha1_value)
 
 down = Downloader()
 down.download(args.download_url, args.old_file, args.new_file, old_file_sha1_value)
