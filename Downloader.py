@@ -31,6 +31,17 @@ class Utility:
             size /= 1024.0  # apply the division
         return "%.*f%s" % (precision, size, suffixes[suffix_index])
 
+    @staticmethod
+    def calculate_sha1(filename):
+        if not os.path.exists(filename):
+            raise Exception("File cannot be found")
+
+        hasher = hashlib.sha1()
+        with open(filename, "rb") as afile:
+            buf = afile.read()
+            hasher.update(buf)
+        return hasher.hexdigest()
+
 
 class Downloader:
     def __init__(self):
@@ -118,13 +129,13 @@ class Downloader:
         self.fp.close()  # if download is stopped the file should be closed
 
         if os.path.exists(downloaded_file_name) and os.path.exists(old_file_path):
-            dled_file_sha1_value = hashlib.sha1(downloaded_file_name).hexdigest()
+            dled_file_sha1_value = util.calculate_sha1(downloaded_file_name)
             print "Sha1 for the downloaded file: %s" % dled_file_sha1_value
             if old_file_sha1_value != dled_file_sha1_value:
                 print "The sha1 values differ, the downloaded file is different than the other. Replacing old file with downloaded file"
                 copyfile(downloaded_file_name, old_file_path)
             else:
-                print "Sha1 values are the same - files are the same"
+                print "Sha1 values are the same - files are the same (not replacing the old file with downloaded one)"
         else:
             print "Renaming downloaded file %s with old filename: %s" % (downloaded_file_name, old_file_path)
             copyfile(downloaded_file_name, old_file_path)
@@ -154,13 +165,12 @@ parser.add_argument("-download_url", "--download_url", help="Download url", requ
                     dest="download_url", metavar="<Download url>")
 args = parser.parse_args()
 
-old_file_path = os.path.dirname(os.path.realpath(sys.argv[0])) + '/' + args.old_file
 old_file_sha1_value = None
 
-if os.path.exists(old_file_path):
-    # calculate sha1
-    old_file_sha1_value = hashlib.sha1(old_file_path).hexdigest()
+if os.path.exists(args.old_file):
+    util = Utility()
+    old_file_sha1_value = util.calculate_sha1(args.old_file)
     print "Sha1 value for old file: %s" % str(old_file_sha1_value)
 
 down = Downloader()
-down.download(args.download_url, old_file_path, args.new_file, old_file_sha1_value)
+down.download(args.download_url, args.old_file, args.new_file, old_file_sha1_value)
