@@ -84,13 +84,13 @@ class Downloader:
             try:
                 data = handler.read(block_sz)
             except (urllib2.HTTPError, urllib2.URLError) as error:
-                util.writeError("Error occured while downloading the file: " + error)
+                util.writeError("Error occured while downloading the file: %s" % str(error))
                 return
             except timeout:
                 util.writeError("Timeout error occured while downloading the file")
                 return
             except Exception, e:
-                util.writeError("Exception occured while downloading the file. Exception was:" + str(e))
+                util.writeError("Exception occured while downloading the file. Exception was: %s" % str(e))
                 return
 
             file_size_dl += len(data)
@@ -121,17 +121,31 @@ class Downloader:
         handler.close()  # if download is stopped the handler should be closed
         self.fp.close()  # if download is stopped the file should be closed
 
-        if os.path.exists(downloaded_file_name) and os.path.exists(old_file_path):
-            dled_file_sha1_value = util.calculate_sha1(downloaded_file_name)
-            print "\nSha1 for the downloaded file: %s" % dled_file_sha1_value
-            if old_file_sha1_value != dled_file_sha1_value:
-                print "\nThe content of the files differ - replacing old file with downloaded file"
-                copyfile(downloaded_file_name, old_file_path)
+        if old_file_path != None:
+            if os.path.exists(old_file_path):
+                if os.path.exists(downloaded_file_name):
+                    dled_file_sha1_value = util.calculate_sha1(downloaded_file_name)
+                    print "\nSha1 for the downloaded file: %s" % dled_file_sha1_value
+                    if old_file_sha1_value != dled_file_sha1_value:
+                        print "\nThe content of the files differ - replacing old file with downloaded file"
+                        copyfile(downloaded_file_name, old_file_path)
+                    else:
+                        print "\nFiles are identical - not replacing the old file with downloaded one"
+                else:
+                    print "\nDownloaded file doesn't exist"
+                    return
             else:
-                print "\nFiles are identical - not replacing the old file with downloaded one"
+                if os.path.exists(downloaded_file_name):
+                    copyfile(downloaded_file_name, new_file_base_name)
+                else:
+                    print "\nDownloaded file doesn't exist"
+                    return
         else:
-            print "\nRenaming downloaded file %s with old filename: %s" % (downloaded_file_name, old_file_path)
-            copyfile(downloaded_file_name, old_file_path)
+            if os.path.exists(downloaded_file_name):
+                copyfile(downloaded_file_name, new_file_base_name)
+            else:
+                print "\nDownloaded file doesn't exist"
+                return
 
         if os.path.exists(downloaded_file_name):
             # Remove downloaded file
@@ -151,7 +165,7 @@ class Downloader:
 
 parser = argparse.ArgumentParser(
     description="Downloads file from given url. Compares sha1 value of downloaded file to sha1 value of old file and the values differ, the new file replaces the old file.")
-parser.add_argument("-old_file", "--old_file", help="Location of existing old file", required=True,
+parser.add_argument("-old_file", "--old_file", help="Location of existing old file", required=False,
                     dest="old_file", metavar="<Location for for old file>")
 parser.add_argument("-new_file", "--new_file", help="Base name of the new file", required=True,
                     dest="new_file", metavar="<Basename for new file>")
@@ -161,10 +175,14 @@ args = parser.parse_args()
 
 old_file_sha1_value = None
 
-if os.path.exists(args.old_file):
-    util = Utility()
-    old_file_sha1_value = util.calculate_sha1(args.old_file)
-    print "\nSha1 value for old file: %s" % str(old_file_sha1_value)
-
 down = Downloader()
-down.download(args.download_url, args.old_file, args.new_file, old_file_sha1_value)
+
+if args.old_file:
+    if os.path.exists(args.old_file):
+        util = Utility()
+        old_file_sha1_value = util.calculate_sha1(args.old_file)
+        print "\nSha1 value for old file: %s" % str(old_file_sha1_value)
+
+        down.download(args.download_url, args.old_file, args.new_file, old_file_sha1_value)
+else:
+    down.download(args.download_url, None, args.new_file, old_file_sha1_value)
