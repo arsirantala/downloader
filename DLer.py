@@ -23,11 +23,16 @@ import webbrowser
 from _socket import timeout
 from os.path import expanduser
 from sys import platform
+import ctypes.wintypes
 
+if platform == "win32":
+    import _winreg
 
 # Constants ->
 DLER_VERSION = "1.0.0"
-# <- Constants
+CSIDL_PERSONAL = 5       # My Documents
+SHGFP_TYPE_CURRENT= 0   # Want current, not default value
+#  <- Constants
 
 
 class Utility:
@@ -50,6 +55,23 @@ class Utility:
             suffix_index += 1  # increment the index of the suffix
             size /= 1024.0  # apply the division
         return "%.*f%s" % (precision, size, suffixes[suffix_index])
+
+    @staticmethod
+    def get_poe_installation_directoryname():
+        directorypath = ""
+        if platform == "win32":
+            try:
+                reg_path_key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
+                                               r'Software\GrindingGearGames\Path of Exile')
+            except:
+                return directorypath
+
+            try:
+                reg_path_value, reg_path_type = _winreg.QueryValueEx(reg_path_key, "InstallLocation")
+            except:
+                return directorypath
+
+        return reg_path_value
 
 
 class Downloader:
@@ -79,7 +101,12 @@ class Downloader:
             self.stop_down = True
             return
 
-        size = long(handler.headers['content-length'])
+        no_content_length = False
+        if "content-length" in handler.headers:
+            size = long(handler.headers['content-length'])
+        else:
+            no_content_length = True
+            logging.info("content-length was not found from headers! Can't show download status")
 
         tmpdir = tempfile.gettempdir()
         filepath = tmpdir + '/' + dest
@@ -110,25 +137,40 @@ class Downloader:
 
             file_size_dl += len(data)
 
-            percent = file_size_dl * 100. / size
+            if no_content_length == False:
+                percent = file_size_dl * 100. / size
+            else:
+                percent = 100
+
             progressbar["value"] = percent
 
             p1 = util.get_human_readable(file_size_dl)
-            p2 = util.get_human_readable(size)
+            if no_content_length == False:
+                p2 = util.get_human_readable(size)
+            else:
+                p2 = "Unknown"
 
             now = datetime.datetime.now().replace(microsecond=0)
             difference = now - startTime
             if difference.total_seconds() > 0:
                 kbs = file_size_dl / difference.total_seconds()
-                bytesLeft = size - file_size_dl
-                timeLeft = bytesLeft / kbs
-                estimateLeft = str(datetime.timedelta(seconds=timeLeft)).split(".")[0]
-                downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " \
-                + p1 + " bytes of " + p2 + " [" + estimateLeft + " time left. Speed: " + \
-                str(util.get_human_readable(kbs)) + "/s]")
+                if no_content_length == False:
+                    bytesLeft = size - file_size_dl
+                    timeLeft = bytesLeft / kbs
+                    estimateLeft = str(datetime.timedelta(seconds=timeLeft)).split(".")[0]
+                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " \
+                                                     + p1 + " bytes of " + p2 + " [" + estimateLeft + " time left. Speed: " + \
+                                                     str(util.get_human_readable(kbs)) + "/s]")
+                else:
+                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " \
+                                                     + p1 + " bytes of Unknown [??? time left. Speed: " + \
+                                                     str(util.get_human_readable(kbs)) + "/s]")
+
             else:
-                downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded "\
-                + p1 + " bytes of " + p2)
+                if no_content_length == False:
+                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " + p1 + " bytes of " + p2)
+                else:
+                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " + p1 + " bytes of Unknown")
 
             self.fp.write(data)
             _continue = data
@@ -211,8 +253,8 @@ class Application:
         menubar.add_cascade(label="File", menu=quit_menu)
 
         tools_menu = tk.Menu(menubar, tearoff=0)
+        tools_menu.add_command(label="Open POE installation directory...", command=self.open_poe_installation_directory)
         tools_menu.add_command(label="Open POE filter directory...", command=self.open_poe_filter_directory)
-        tools_menu.add_separator()
 
         menubar.add_cascade(label="Tools", menu=tools_menu)
 
@@ -350,16 +392,21 @@ class Application:
             return
 
         if variant == "Highwind filter":
-            self.prep_dl_thread("https://d28ni02q1j81yg.cloudfront.net/Suuntolink_installer.dmg", "highwind_installer.dmg")
+            self.prep_dl_thread("https://pastebin.com/raw/k5q2b570", "highwind.filter")
+
+    def open_poe_installation_directory(self):
+        util = Utility()
+        path = util.get_poe_installation_directoryname().replace("\\", "\"").encode("utf-8")
+
+        subprocess.call(['explorer', path])
+        return
 
     def open_poe_filter_directory(self):
-        # TODO update to open POE filter directory instead
-        path = "/Users/rantalaa/Downloads"
-        if platform == 'darwin':
-            subprocess.check_call(['open', '--', path])
-        elif platform == 'win32':
-            subprocess.check_call(['explorer', path])
-        return
+        buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+        ctypes.windll.shell32.SHGetFolderPathW(0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, buf)
+        path = buf.value + "\My Games\Path of Exile"
+
+        subprocess.call(['explorer', path])
 
 
 def get_version_string(filename):
@@ -377,5 +424,9 @@ if __name__ == "__main__":
 
     logging.basicConfig(filename=home + '/Downloader.log', level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%d.%m.%Y %H:%M:%S')
     logging.info('Downloader started')
+
+    if platform != 'win32':
+        logging.error("Unsupported OS")
+        sys.exit()
 
     myObj = Application()
