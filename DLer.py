@@ -5,7 +5,9 @@ Author: Ixoth
 """
 import Tkinter as tk
 import atexit
+import ctypes.wintypes
 import datetime
+import hashlib
 import httplib
 import json
 import logging
@@ -22,8 +24,10 @@ import urllib2
 import webbrowser
 from _socket import timeout
 from os.path import expanduser
+from shutil import copyfile
 from sys import platform
-import ctypes.wintypes
+
+import requests
 
 if platform == "win32":
     import _winreg
@@ -58,21 +62,38 @@ class Utility:
 
     @staticmethod
     def get_poe_installation_directoryname():
-        directorypath = ""
-        if platform == "win32":
-            try:
-                reg_path_key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
-                                               r'Software\GrindingGearGames\Path of Exile')
-            except:
-                return directorypath
+        directory_path = ""
+        try:
+            reg_path_key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
+                                           r'Software\GrindingGearGames\Path of Exile')
+        except:
+            return directory_path
 
-            try:
-                reg_path_value, reg_path_type = _winreg.QueryValueEx(reg_path_key, "InstallLocation")
-            except:
-                return directorypath
+        try:
+            reg_path_value, reg_path_type = _winreg.QueryValueEx(reg_path_key, "InstallLocation")
+        except:
+            return directory_path
 
         return reg_path_value
 
+    @staticmethod
+    def get_file_size_in_url(base_url):
+        return requests.get(base_url, stream=True).headers['Content-length']
+
+    @staticmethod
+    def get_last_modified_date_in_url(base_url):
+        return requests.get(base_url, stream=True).headers['Date']
+
+    @staticmethod
+    def calculate_sha1(filename):
+        if not os.path.exists(filename):
+            raise Exception("File cannot be found")
+
+        hasher = hashlib.sha1()
+        with open(filename, "rb") as afile:
+            buf = afile.read()
+            hasher.update(buf)
+        return hasher.hexdigest()
 
 class Downloader:
     def __init__(self):
@@ -96,7 +117,7 @@ class Downloader:
         try:
             handler = urllib2.urlopen(url, timeout=240)
         except urllib2.HTTPError, e:
-            util.writeError("Error: " + e + " occured during download", statusbar_label, root, stop_button, download_highwind)
+            util.writeError("Error: " + e + " occurred during download", statusbar_label, root, stop_button, download_highwind)
             self._continue = False
             self.stop_down = True
             return
@@ -108,19 +129,19 @@ class Downloader:
             no_content_length = True
             logging.info("content-length was not found from headers! Can't show download status")
 
-        tmpdir = tempfile.gettempdir()
-        filepath = tmpdir + '/' + dest
+        temp_dir = tempfile.gettempdir()
+        file_path = temp_dir + '/' + dest
 
         util = Utility()
 
-        statusbar_label.config(text="Downloading to: " + filepath + "...")
+        statusbar_label.config(text="Downloading to: " + file_path + "...")
 
-        self.fp = open(filepath, "wb+")
+        self.fp = open(file_path, "wb+")
 
         file_size_dl = 0
         block_sz = 8192
 
-        startTime = datetime.datetime.now().replace(microsecond=0)
+        start_time = datetime.datetime.now().replace(microsecond=0)
 
         while not self.stop_down and _continue:
             try:
@@ -129,15 +150,15 @@ class Downloader:
                 util.writeError("Error occured while downloading the file: " + error, statusbar_label, root, stop_button, download_highwind)
                 return
             except timeout:
-                util.writeError("Timeout error occured while downloading the file", statusbar_label, root, stop_button, download_highwind)
+                util.writeError("Timeout error occurred while downloading the file", statusbar_label, root, stop_button, download_highwind)
                 return
             except Exception, e:
-                util.writeError("Exception occured while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind)
+                util.writeError("Exception occurred while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind)
                 return
 
             file_size_dl += len(data)
 
-            if no_content_length == False:
+            if not no_content_length:
                 percent = file_size_dl * 100. / size
             else:
                 percent = 100
@@ -145,13 +166,13 @@ class Downloader:
             progressbar["value"] = percent
 
             p1 = util.get_human_readable(file_size_dl)
-            if no_content_length == False:
+            if not no_content_length:
                 p2 = util.get_human_readable(size)
             else:
                 p2 = "Unknown"
 
             now = datetime.datetime.now().replace(microsecond=0)
-            difference = now - startTime
+            difference = now - start_time
             if difference.total_seconds() > 0:
                 kbs = file_size_dl / difference.total_seconds()
                 if no_content_length == False:
@@ -182,10 +203,28 @@ class Downloader:
             logging.info("Filter was downloaded")
             stop_button.config(state="disabled")
 
-            if os.path.exists(filepath):
-                statusbar_label.config(text="Installation of Highwind filter was completed")
+            if os.path.exists(file_path):
+                dled_file_sha1_value = util.calculate_sha1(file_path)
+                buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+                ctypes.windll.shell32.SHGetFolderPathW(0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, buf)
+                path = buf.value + "\My Games\Path of Exile"
+                if os.path.exists(path):
+                    installed_file_path = path + "\\" + dest
+                    installed_file_sha1_value = None
+                    if os.path.exists(installed_file_path):
+                        installed_file_sha1_value = util.calculate_sha1(installed_file_path)
+
+                    if dled_file_sha1_value != installed_file_sha1_value:
+                        try:
+                            copyfile(file_path, installed_file_path.encode("utf-8"))
+                        except Exception, e:
+                            statusbar_label.config(text="An exception occured while attempting to copy file: %s" % e)
+
+                        statusbar_label.config(text="Installation of Highwind filter was completed")
+                    else:
+                        statusbar_label.config(text="The filter is the same as the older one")
             else:
-                util.writeError("Error: the downloaded file: " + filepath + " doesn't exist!", statusbar_label, root, stop_button, download_highwind)
+                util.writeError("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind)
         else:
             statusbar_label.config(text="Download was stopped by user")
 
@@ -217,32 +256,41 @@ class Application:
         self.root.resizable(0, 0)
 
         self.frame = tk.Frame(self.root, bg="blue")
-        tk.Label(self.frame, text="Welcome to Downloader. Click button below to download and install Highwind filter", bg="blue", fg="white").grid(row=0, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
+        tk.Label(self.frame, text="Welcome to Downloader. Click button below to download and install Highwind filter", bg="blue", fg="white").grid(row=0, column=0, columnspan=2, sticky=tk.N+tk.E+tk.W)
 
         self.progressbar = ttk.Progressbar(self.frame, length=650, maximum=100)
-        self.progressbar.grid(row=1, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
+        self.progressbar.grid(row=1, column=0, columnspan=2, sticky=tk.N+tk.E+tk.W)
 
         self.downloadstatus_Label = tk.Label(self.frame, text="", bg="blue", fg="white")
-        self.downloadstatus_Label.grid(row=2, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
+        self.downloadstatus_Label.grid(row=2, column=0, columnspan=2, sticky=tk.N+tk.E+tk.W)
 
-        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("Highwind filter"), width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("Highwind filter"), width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind.grid(row=3, column=0, pady=15)
+
+        self.download_highwind_mapping = tk.Button(self.frame, text="Highwind mapping filter", command=lambda: self.download_highwind_filter("Highwind mapping filter"), width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_mapping.grid(row=3, column=1, pady=15)
 
         highwind_labelframe = ttk.LabelFrame(self.frame, text="Highwind filter info")
         highwind_labelframe.grid(row=4, column=0, padx=2, pady=2)
         self.highwind_last_mod_label = tk.Label(highwind_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_last_mod_label.config(wraplength=100, justify=tk.LEFT)
         self.highwind_last_mod_label.pack(fill=tk.X, side=tk.TOP)
-        self.highwind_ver_label = tk.Label(highwind_labelframe, text="Version: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_ver_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_size_label = tk.Label(highwind_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_size_label.pack(fill=tk.X, side=tk.TOP)
 
+        highwind_mapping_labelframe = ttk.LabelFrame(self.frame, text="Highwind mapping filter info")
+        highwind_mapping_labelframe.grid(row=4, column=1, padx=2, pady=2)
+        self.highwind_mapping_last_mod_label = tk.Label(highwind_mapping_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
+        self.highwind_mapping_last_mod_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_mapping_last_mod_label.pack(fill=tk.X, side=tk.TOP)
+        self.highwind_mapping_size_label = tk.Label(highwind_mapping_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
+        self.highwind_mapping_size_label.pack(fill=tk.X, side=tk.TOP)
+
         self.stop_button = tk.Button(self.frame, text="Stop", command=lambda: self.stop_download_operation(self.down), state=tk.DISABLED, width=10, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
-        self.stop_button.grid(row=8, column=0, columnspan=4, pady=10)
+        self.stop_button.grid(row=8, column=0, columnspan=2, pady=10)
 
         self.statusbar_label = tk.Label(self.frame, text="", bg="blue", fg="white")
-        self.statusbar_label.grid(row=9, column=0, columnspan=4, sticky=tk.W)
+        self.statusbar_label.grid(row=9, column=0, columnspan=2, sticky=tk.W)
 
         # create a top level menu
         menubar = tk.Menu(self.root)
@@ -264,6 +312,7 @@ class Application:
         self.frame.pack(fill=tk.X)
 
         self.update_labelframes("highwind")
+        self.update_labelframes("highwind_mapping")
 
         self.down = None
         self.center(self.root)
@@ -277,27 +326,23 @@ class Application:
         else:
             return False
 
-    def set_content_to_labelframes_labels(self, variant, file, url, size_label, mod_label, ver_label, dont_ask_from_juche=False):
-        # length = self.get_file_size_in_s3(url, file)
+    def set_content_to_labelframes_labels(self, variant, url, size_label, mod_label):
+        util = Utility()
+        length = util.get_file_size_in_url(url)
 
-        # if length == "Unknown":
-        #    return
+        if length == "Unknown":
+            return
 
-        length = 0 #long(length)
+        length = long(length)
         size_label.config(text=self.file_size(length))
-        #mod_label.config(text=self.modified_date(self.get_last_modified_date_in_s3(url, file)))
-        mod_label.config(text=self.modified_date("NA"))
-
-        if not dont_ask_from_juche:
-            if self.file_is_same_in_size(file, length):
-                ver_label.config(text=update_sl_version_numbers_from_juche(variant))
+        mod_label.config(text=self.modified_date(util.get_last_modified_date_in_url(url)))
 
     def update_labelframes(self, variant):
         if self.have_internet():
             if variant == "highwind":
-                self.set_content_to_labelframes_labels("highwind", \
-                "highwind_installer.dmg", "d28ni02q1j81yg.cloudfront.net", \
-                self.highwind_size_label, self.highwind_last_mod_label, self.highwind_ver_label)
+                self.set_content_to_labelframes_labels("highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_filter.filter", self.highwind_size_label, self.highwind_last_mod_label)
+            elif variant == "highwind_mapping":
+                self.set_content_to_labelframes_labels("highwind_mapping", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_mapping_filter.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label)
 
     # From http://stackoverflow.com/questions/3764291/checking-network-connection
     @staticmethod
@@ -372,8 +417,8 @@ class Application:
             "The file is already downloaded to temp directory and its the same size as is in S3, \
             are you sure you wish to redownload it? \
             (click no to start the downloaded installer instead)"):
-                tmpdir = tempfile.gettempdir()
-                filepath = tmpdir + '/' + filename
+                temp_dir = tempfile.gettempdir()
+                file_path = temp_dir + '/' + filename
 
                 util = Utility()
         """
@@ -387,33 +432,41 @@ class Application:
 
     def download_highwind_filter(self, variant):
         if not self.have_internet():
-            self.show_msgbox("No internet connection", \
-            "Sorry feature unanavailable because of no internet connectivity", 200, 200, "error")
+            self.show_msgbox("No internet connection", "Sorry feature unanavailable because of no internet connectivity", 200, 200, "error")
             return
 
         if variant == "Highwind filter":
-            self.prep_dl_thread("https://pastebin.com/raw/k5q2b570", "highwind.filter")
+            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_filter.filter", "highwind.filter")
+        elif variant == "Highwind mapping filter":
+            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_mapping_filter.filter", "highwind_mapping.filter")
 
     def open_poe_installation_directory(self):
         util = Utility()
         path = util.get_poe_installation_directoryname().replace("\\", "\"").encode("utf-8")
 
+        if len(path) == 0:
+            self.show_msgbox("Can't find POE installation", \
+                             "Can't find from Windows registry where the POE installation is located!", 200, 200, "error")
+            return
+
         subprocess.call(['explorer', path])
-        return
 
     def open_poe_filter_directory(self):
         buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
         ctypes.windll.shell32.SHGetFolderPathW(0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, buf)
         path = buf.value + "\My Games\Path of Exile"
-
-        subprocess.call(['explorer', path])
+        if os.path.exists(path):
+            subprocess.call(['explorer', path])
+        else:
+            self.show_msgbox("Can't find POE filter directory", \
+                             "The default POE filter directory doesn't exist!", 200, 200, "error")
 
 
 def get_version_string(filename):
-    filepath = tempfile.gettempdir() + '/' + filename
-    if os.path.exists(filepath):
+    file_path = tempfile.gettempdir() + '/' + filename
+    if os.path.exists(file_path):
         util = Utility()
-        version = ".".join([str(i) for i in util.get_version_number(filepath)])
+        version = ".".join([str(i) for i in util.get_version_number(file_path)])
         return version
     else:
         return "Unknown"
