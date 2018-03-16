@@ -28,3 +28,29 @@ I am focusing in the near future to further develop the UI version of the script
 **Q**: I cannot get the makeExecutable.bat work, the binary is generated in dist but when I start it, I get an error
 
 **A**: Make sure that all the required modules are installed. See with pip which modules are installed, and install all the modules what the script uses (see the import section in the script). The executable might also suddenly get closed without any apparent reason - this might be due Antivirus blocking the executable thinking it as a malware (seen it happen in my own computer). Only fix for such is to have the directory/executable be exluded in the Antivirus program.
+
+# Comprehensive guide for makeExecutable.bat
+
+Here is good guide how to first install python and virtual environment for it: http://pymote.readthedocs.io/en/latest/install/windows_virtualenv.html
+
+Essentially once you've installed python, start command prompt and enter command: **pip install virtualenv**
+
+After that goto Documents directory and enter following command to install python to virtual environment: **virtualenv pymote_env**
+
+Now install pyinstaller to the virtual environment by entering command in pymote directory: **Scripts\pip.exe install pyinstaller**
+
+Install requests module: **Scripts\pip.exe install requests**
+
+**Now make sure the scripts directory in virtual environment is in system path that the pyinstaller can be found by the makeExecutable.bat file.**
+
+Run the makeExecutable.bat file, and once its completed the Downloader.exe is found in dist directory.
+
+If you now start the Downloader.exe in dist directory, AntiVirus software most likely will block it - you need to exlude the dist directory in the AntiVirus settings!
+
+# Troubleshooting Downloader.exe errors
+
+In case you keep getting an error: "Failed to execute script DLer", run the DLer.py script (in the directory where you cloned this repository) by using the command: **python.exe DLer.py**
+
+**(Again make sure the scripts directory in virtual environment is in system path that the pyinstaller can be found by the makeExecutable.bat file)**
+
+And see what python reports as an error (most likely the requests module is not installed).
