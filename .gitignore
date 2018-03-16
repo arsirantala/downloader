@@ -5,4 +5,4 @@ build/
 Downloader.spec
 DownloaderConsole.spec
 download_highwind.bat
-
+*.out
