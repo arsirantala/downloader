@@ -121,8 +121,8 @@ class Downloader:
             self.fp = open(file_path, "wb+")
         except:
             util.writeError("Was not able to open temporary file for writing the filter file at " + file_path, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
-            download_highwind.config(state="normal")
-            download_highwind_mapping.config(state="normal")
+            self._continue = False
+            self.stop_down = True
             return
 
         file_size_dl = 0
@@ -135,18 +135,18 @@ class Downloader:
                 data = handler.read(block_sz)
             except (urllib2.HTTPError, urllib2.URLError) as error:
                 util.writeError("Error occured while downloading the file: " + error, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
-                download_highwind.config(state="normal")
-                download_highwind_mapping.config(state="normal")
+                self._continue = False
+                self.stop_down = True
                 return
             except timeout:
                 util.writeError("Timeout error occurred while downloading the file", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
-                download_highwind.config(state="normal")
-                download_highwind_mapping.config(state="normal")
+                self._continue = False
+                self.stop_down = True
                 return
             except Exception, e:
                 util.writeError("Exception occurred while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
-                download_highwind.config(state="normal")
-                download_highwind_mapping.config(state="normal")
+                self._continue = False
+                self.stop_down = True
                 return
 
             file_size_dl += len(data)
