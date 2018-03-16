@@ -18,6 +18,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import tkMessageBox
 import ttk
 import urllib2
@@ -28,7 +29,7 @@ from sys import platform
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.2"
+DLER_VERSION = "1.0.3"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT= 0   # Want current, not default value
 #  <- Constants
@@ -39,11 +40,13 @@ class Utility:
     def __init__(self):
         pass
 
-    def writeError(self, msg, statusbar_label, root, stop_button, download_highwind, download_highwind_mapper):
+    def writeError(self, msg, statusbar_label, root, stop_button, download_highwind, download_highwind_mapper, download_highwind_strict, download_highwind_very_strict):
         statusbar_label.config(text=msg)
         stop_button.config(state="disabled")
         download_highwind.config(state="normal")
         download_highwind_mapper.config(state="normal")
+        download_highwind_strict.config(state="normal")
+        download_highwind_very_strict.config(state="normal")
         root.update()
         my_logger.error(msg)
 
@@ -65,6 +68,10 @@ class Utility:
         return requests.get(base_url, stream=True).headers['Date']
 
     @staticmethod
+    def get_last_modified_date_in_file(filepath):
+        return os.path.getmtime(filepath)
+
+    @staticmethod
     def calculate_sha1(filename):
         if not os.path.exists(filename):
             raise Exception("File cannot be found")
@@ -80,12 +87,12 @@ class Downloader:
         self.stop_down = False
         self.thread = None
 
-    def download(self, url, destination, download_highwind, download_highwind_mapping, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
+    def download(self, url, destination, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
 
-        self.thread = threading.Thread(target=self.__down, args=(url, destination, download_highwind, download_highwind_mapping, progressbar, downloadstatus_label, stop_button, statusbar_label, root))
+        self.thread = threading.Thread(target=self.__down, args=(url, destination, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, progressbar, downloadstatus_label, stop_button, statusbar_label, root))
         self.thread.start()
 
-    def __down(self, url, dest, download_highwind, download_highwind_mapping, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
+    def __down(self, url, dest, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
 
         util = Utility()
 
@@ -93,12 +100,14 @@ class Downloader:
 
         download_highwind.config(state="disabled")
         download_highwind_mapping.config(state="disabled")
+        download_highwind_strict.config(state="disabled")
+        download_highwind_very_strict.config(state="disabled")
 
         _continue = True
         try:
             handler = urllib2.urlopen(url, timeout=240)
         except urllib2.HTTPError, e:
-            util.writeError("Error: " + e + " occurred during download", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
+            util.writeError("Error: " + e + " occurred during download", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
             self._continue = False
             self.stop_down = True
             return
@@ -120,7 +129,7 @@ class Downloader:
         try:
             self.fp = open(file_path, "wb+")
         except:
-            util.writeError("Was not able to open temporary file for writing the filter file at " + file_path, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
+            util.writeError("Was not able to open temporary file for writing the filter file at " + file_path, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
             self._continue = False
             self.stop_down = True
             return
@@ -134,17 +143,17 @@ class Downloader:
             try:
                 data = handler.read(block_sz)
             except (urllib2.HTTPError, urllib2.URLError) as error:
-                util.writeError("Error occured while downloading the file: " + error, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
+                util.writeError("Error occured while downloading the file: " + error, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
                 self._continue = False
                 self.stop_down = True
                 return
             except timeout:
-                util.writeError("Timeout error occurred while downloading the file", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
+                util.writeError("Timeout error occurred while downloading the file", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
                 self._continue = False
                 self.stop_down = True
                 return
             except Exception, e:
-                util.writeError("Exception occurred while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
+                util.writeError("Exception occurred while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
                 self._continue = False
                 self.stop_down = True
                 return
@@ -193,7 +202,7 @@ class Downloader:
         self.fp.close()  # if download is stopped the file should be closed
 
         if not self.stop_down:
-            my_logger.info("Filter was downloaded")
+            my_logger.info(file_path + " was downloaded")
             stop_button.config(state="disabled")
 
             if os.path.exists(file_path):
@@ -211,18 +220,21 @@ class Downloader:
                         try:
                             copyfile(file_path, installed_file_path.encode("utf-8"))
                         except Exception, e:
-                            statusbar_label.config(text="An exception occured while attempting to copy file: %s" % e)
+                            statusbar_label.config(text="An exception occurred while attempting to copy file: {}".format(
+                                e))
 
-                        statusbar_label.config(text="Installation of Highwind filter was completed")
+                        statusbar_label.config(text="Installation of " + dest + " filter was completed")
                     else:
                         statusbar_label.config(text="The filter is the same as the older one")
             else:
-                util.writeError("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
+                util.writeError("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
         else:
             statusbar_label.config(text="Download was stopped by user")
 
         download_highwind.config(state="normal")
         download_highwind_mapping.config(state="normal")
+        download_highwind_strict.config(state="normal")
+        download_highwind_very_strict.config(state="normal")
 
     def cancel(self):
         self.stop_down = True
@@ -250,41 +262,66 @@ class Application:
         self.root.resizable(0, 0)
 
         self.frame = tk.Frame(self.root, bg="blue")
-        tk.Label(self.frame, text="Welcome to Downloader. Click button below to download and install Highwind filter", bg="blue", fg="white").grid(row=0, column=0, columnspan=2, sticky=tk.N+tk.E+tk.W)
+        tk.Label(self.frame, text="Welcome to Downloader. Click button below to download and install Highwind filter", bg="blue", fg="white").grid(row=0, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
         self.progressbar = ttk.Progressbar(self.frame, length=650, maximum=100)
-        self.progressbar.grid(row=1, column=0, columnspan=2, sticky=tk.N+tk.E+tk.W)
+        self.progressbar.grid(row=1, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
         self.downloadstatus_Label = tk.Label(self.frame, text="", bg="blue", fg="white")
-        self.downloadstatus_Label.grid(row=2, column=0, columnspan=2, sticky=tk.N+tk.E+tk.W)
+        self.downloadstatus_Label.grid(row=2, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
-        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("Highwind filter"), width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("Highwind filter"), width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind.grid(row=3, column=0, pady=15)
-
         self.download_highwind_mapping = tk.Button(self.frame, text="Highwind mapping filter", command=lambda: self.download_highwind_filter("Highwind mapping filter"), width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind_mapping.grid(row=3, column=1, pady=15)
+        self.download_highwind_strict = tk.Button(self.frame, text="Highwind strict filter", command=lambda: self.download_highwind_filter("Highwind strict filter"), width=17, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_strict.grid(row=3, column=2, pady=15)
+        self.download_highwind_very_strict = tk.Button(self.frame, text="Highwind very strict filter", command=lambda: self.download_highwind_filter("Highwind very strict filter"), width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_very_strict.grid(row=3, column=3, pady=15)
 
-        highwind_labelframe = ttk.LabelFrame(self.frame, text="Highwind filter info")
+        highwind_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
         highwind_labelframe.grid(row=4, column=0, padx=2, pady=2)
         self.highwind_last_mod_label = tk.Label(highwind_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_last_mod_label.config(wraplength=100, justify=tk.LEFT)
         self.highwind_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_size_label = tk.Label(highwind_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_size_label.pack(fill=tk.X, side=tk.TOP)
-
-        highwind_mapping_labelframe = ttk.LabelFrame(self.frame, text="Highwind mapping filter info")
+        highwind_mapping_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
         highwind_mapping_labelframe.grid(row=4, column=1, padx=2, pady=2)
         self.highwind_mapping_last_mod_label = tk.Label(highwind_mapping_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_mapping_last_mod_label.config(wraplength=100, justify=tk.LEFT)
         self.highwind_mapping_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_mapping_size_label = tk.Label(highwind_mapping_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_mapping_size_label.pack(fill=tk.X, side=tk.TOP)
+        highwind_strict_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
+        highwind_strict_labelframe.grid(row=4, column=2, padx=2, pady=2)
+        self.highwind_strict_last_mod_label = tk.Label(highwind_strict_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
+        self.highwind_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_strict_last_mod_label.pack(fill=tk.X, side=tk.TOP)
+        self.highwind_strict_size_label = tk.Label(highwind_strict_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
+        self.highwind_strict_size_label.pack(fill=tk.X, side=tk.TOP)
+        highwind_very_strict_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
+        highwind_very_strict_labelframe.grid(row=4, column=3, padx=2, pady=2)
+        self.highwind_very_strict_last_mod_label = tk.Label(highwind_very_strict_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
+        self.highwind_very_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_very_strict_last_mod_label.pack(fill=tk.X, side=tk.TOP)
+        self.highwind_very_strict_size_label = tk.Label(highwind_very_strict_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
+        self.highwind_very_strict_size_label.pack(fill=tk.X, side=tk.TOP)
+
+        self.highwind_last_modified_label = tk.Label(self.frame, text="Your Highwind filter: Not found", font="-weight bold", bg="blue", fg="white")
+        self.highwind_last_modified_label.grid(row=5, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
+        self.highwind_mapping_last_modified_label = tk.Label(self.frame, text="Your Highwind mapping filter: Not found", font="-weight bold", bg="blue", fg="white")
+        self.highwind_mapping_last_modified_label.grid(row=6, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
+        self.highwind_strict_last_modified_label = tk.Label(self.frame, text="Your Highwind strict filter: Not found", font="-weight bold", bg="blue", fg="white")
+        self.highwind_strict_last_modified_label.grid(row=7, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
+        self.highwind_very_strict_last_modified_label = tk.Label(self.frame, text="Your Highwind very strict filter: Not found", font="-weight bold", bg="blue", fg="white")
+        self.highwind_very_strict_last_modified_label.grid(row=8, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
         self.stop_button = tk.Button(self.frame, text="Stop", command=lambda: self.stop_download_operation(self.down), state=tk.DISABLED, width=10, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
-        self.stop_button.grid(row=8, column=0, columnspan=2, pady=10)
+        self.stop_button.grid(row=9, column=0, columnspan=4, pady=10)
 
         self.statusbar_label = tk.Label(self.frame, text="", bg="blue", fg="white")
-        self.statusbar_label.grid(row=9, column=0, columnspan=2, sticky=tk.W)
+        self.statusbar_label.grid(row=10, column=0, columnspan=4, sticky=tk.W)
 
         # create a top level menu
         menubar = tk.Menu(self.root)
@@ -300,13 +337,18 @@ class Application:
         menubar.add_cascade(label="Tools", menu=tools_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
-        help_menu.add_command(label="About Downloader", command=lambda: self.about_downloader())
         help_menu.add_command(label="Show Downloader's home page at github", command=lambda: self.downloader_homepage())
+        help_menu.add_separator()
+        help_menu.add_command(label="About Downloader", command=lambda: self.about_downloader())
         menubar.add_cascade(label="Help", menu=help_menu)
         self.frame.pack(fill=tk.X)
 
         self.update_labelframes("highwind")
         self.update_labelframes("highwind_mapping")
+        self.update_labelframes("highwind_strict")
+        self.update_labelframes("highwind_very_strict")
+
+        self.update_labels()
 
         self.down = None
         self.center(self.root)
@@ -331,12 +373,33 @@ class Application:
         size_label.config(text=self.file_size(length))
         mod_label.config(text=self.modified_date(util.get_last_modified_date_in_url(url)))
 
+    def set_content_to_label(self, variant, label):
+        util = Utility()
+
+        buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+        ctypes.windll.shell32.SHGetFolderPathW(0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, buf)
+        path = buf.value + "\My Games\Path of Exile\\" + variant + ".filter"
+        if os.path.exists(path):
+            label.config(text="Your " + variant + " filter file last modified time: %s" % time.ctime(util.get_last_modified_date_in_file(path)))
+        else:
+            label.config(text="Your " + variant + " filter file is not found")
+
     def update_labelframes(self, variant):
         if self.have_internet():
             if variant == "highwind":
                 self.set_content_to_labelframes_labels("highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_filter.filter", self.highwind_size_label, self.highwind_last_mod_label)
             elif variant == "highwind_mapping":
                 self.set_content_to_labelframes_labels("highwind_mapping", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_mapping_filter.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label)
+            elif variant == "highwind_strict":
+                self.set_content_to_labelframes_labels("highwind_strict", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_strict_filter.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label)
+            elif variant == "highwind_very_strict":
+                self.set_content_to_labelframes_labels("highwind_very_strict", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_very_strict_filter.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label)
+
+    def update_labels(self):
+        self.set_content_to_label("highwind", self.highwind_last_modified_label)
+        self.set_content_to_label("highwind_mapping", self.highwind_mapping_last_modified_label)
+        self.set_content_to_label("highwind_strict", self.highwind_strict_last_modified_label)
+        self.set_content_to_label("highwind_very_strict", self.highwind_very_strict_last_modified_label)
 
     # From http://stackoverflow.com/questions/3764291/checking-network-connection
     @staticmethod
@@ -369,6 +432,10 @@ class Application:
         self.statusbar_label.config(text="Stopping download")
         down.cancel()
         self.stop_button.config(state="disabled")
+        self.download_highwind.config(state="normal")
+        self.download_highwind_mapping.config(state="normal")
+        self.download_highwind_strict.config(state="normal")
+        self.download_highwind_very_strict.config(state="normal")
         self.root.update()
 
     def show_msgbox(self, title, message, width=200, height=200, msgbox_type="info"):
@@ -420,7 +487,7 @@ class Application:
         self.root.update()
 
         self.down = Downloader()
-        self.down.download(url, filename, self.download_highwind, self.download_highwind_mapping, self.progressbar,
+        self.down.download(url, filename, self.download_highwind, self.download_highwind_mapping, self.download_highwind_strict, self.download_highwind_very_strict, self.progressbar,
                            self.downloadstatus_Label, self.stop_button, self.statusbar_label, self.root)
 
     def download_highwind_filter(self, variant):
@@ -432,6 +499,10 @@ class Application:
             self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_filter.filter", "highwind.filter")
         elif variant == "Highwind mapping filter":
             self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_mapping_filter.filter", "highwind_mapping.filter")
+        elif variant == "Highwind strict filter":
+            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_strict_filter.filter", "highwind_strict.filter")
+        elif variant == "Highwind very strict filter":
+            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_very_strict_filter.filter", "highwind_very_strict.filter")
 
     def open_poe_filter_directory(self):
         buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
