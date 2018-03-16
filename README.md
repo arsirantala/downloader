@@ -20,3 +20,6 @@ I am focusing in the near future to further develop the UI version of the script
 **Q**: Wasn't there already updaters for the filters such as FilterNova?
 
 **A**: I actually learned about that yesterday. I didn't know such existed. I have made these scripts to learn python coding, and my scripts are very basic ones, and the UI version is meant to only update Highwind filter (at the time of writing this, I have no plans to extend the support for other filters).
+
+**Q**: The <antivirus program's name> quarantined the Downloader, why?
+**A**: The binary version of the downloader is not codesigned. As the downloader downloads file from the internet the Antivirus sees this a possible malware program.
