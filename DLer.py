@@ -1,39 +1,34 @@
+#!/usr/bin/env python
 """
-Downloader
+date: 16.3.2018
+username: Ixoth
+description: Highwind POE filter Downloader
+"""
 
-Author: Ixoth
-"""
 import Tkinter as tk
 import atexit
 import ctypes.wintypes
 import datetime
 import hashlib
 import httplib
-import json
 import logging
+import logging.handlers
 import os
-import re
-import shutil
 import subprocess
+import sys
 import tempfile
 import threading
-import time
 import tkMessageBox
 import ttk
 import urllib2
-import webbrowser
 from _socket import timeout
-from os.path import expanduser
 from shutil import copyfile
 from sys import platform
 
 import requests
 
-if platform == "win32":
-    import _winreg
-
 # Constants ->
-DLER_VERSION = "1.0.0"
+DLER_VERSION = "1.0.2"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT= 0   # Want current, not default value
 #  <- Constants
@@ -44,12 +39,13 @@ class Utility:
     def __init__(self):
         pass
 
-    def writeError(self, msg, statusbar_label, root, stop_button, download_highwind):
+    def writeError(self, msg, statusbar_label, root, stop_button, download_highwind, download_highwind_mapper):
         statusbar_label.config(text=msg)
         stop_button.config(state="disabled")
         download_highwind.config(state="normal")
+        download_highwind_mapper.config(state="normal")
         root.update()
-        logging.error(msg)
+        my_logger.error(msg)
 
     @staticmethod
     def get_human_readable(size, precision=2):
@@ -59,22 +55,6 @@ class Utility:
             suffix_index += 1  # increment the index of the suffix
             size /= 1024.0  # apply the division
         return "%.*f%s" % (precision, size, suffixes[suffix_index])
-
-    @staticmethod
-    def get_poe_installation_directoryname():
-        directory_path = ""
-        try:
-            reg_path_key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
-                                           r'Software\GrindingGearGames\Path of Exile')
-        except:
-            return directory_path
-
-        try:
-            reg_path_value, reg_path_type = _winreg.QueryValueEx(reg_path_key, "InstallLocation")
-        except:
-            return directory_path
-
-        return reg_path_value
 
     @staticmethod
     def get_file_size_in_url(base_url):
@@ -100,24 +80,25 @@ class Downloader:
         self.stop_down = False
         self.thread = None
 
-    def download(self, url, destination, download_highwind, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
+    def download(self, url, destination, download_highwind, download_highwind_mapping, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
 
-        self.thread = threading.Thread(target=self.__down, args=(url, destination, download_highwind, progressbar, downloadstatus_label, stop_button, statusbar_label, root))
+        self.thread = threading.Thread(target=self.__down, args=(url, destination, download_highwind, download_highwind_mapping, progressbar, downloadstatus_label, stop_button, statusbar_label, root))
         self.thread.start()
 
-    def __down(self, url, dest, download_highwind, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
+    def __down(self, url, dest, download_highwind, download_highwind_mapping, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
 
         util = Utility()
 
-        logging.info("Starting downloading...")
+        my_logger.info("Starting downloading...")
 
         download_highwind.config(state="disabled")
+        download_highwind_mapping.config(state="disabled")
 
         _continue = True
         try:
             handler = urllib2.urlopen(url, timeout=240)
         except urllib2.HTTPError, e:
-            util.writeError("Error: " + e + " occurred during download", statusbar_label, root, stop_button, download_highwind)
+            util.writeError("Error: " + e + " occurred during download", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
             self._continue = False
             self.stop_down = True
             return
@@ -127,7 +108,7 @@ class Downloader:
             size = long(handler.headers['content-length'])
         else:
             no_content_length = True
-            logging.info("content-length was not found from headers! Can't show download status")
+            my_logger.info("content-length was not found from headers! Can't show download status")
 
         temp_dir = tempfile.gettempdir()
         file_path = temp_dir + '/' + dest
@@ -136,7 +117,13 @@ class Downloader:
 
         statusbar_label.config(text="Downloading to: " + file_path + "...")
 
-        self.fp = open(file_path, "wb+")
+        try:
+            self.fp = open(file_path, "wb+")
+        except:
+            util.writeError("Was not able to open temporary file for writing the filter file at " + file_path, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
+            download_highwind.config(state="normal")
+            download_highwind_mapping.config(state="normal")
+            return
 
         file_size_dl = 0
         block_sz = 8192
@@ -147,13 +134,19 @@ class Downloader:
             try:
                 data = handler.read(block_sz)
             except (urllib2.HTTPError, urllib2.URLError) as error:
-                util.writeError("Error occured while downloading the file: " + error, statusbar_label, root, stop_button, download_highwind)
+                util.writeError("Error occured while downloading the file: " + error, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
+                download_highwind.config(state="normal")
+                download_highwind_mapping.config(state="normal")
                 return
             except timeout:
-                util.writeError("Timeout error occurred while downloading the file", statusbar_label, root, stop_button, download_highwind)
+                util.writeError("Timeout error occurred while downloading the file", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
+                download_highwind.config(state="normal")
+                download_highwind_mapping.config(state="normal")
                 return
             except Exception, e:
-                util.writeError("Exception occurred while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind)
+                util.writeError("Exception occurred while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
+                download_highwind.config(state="normal")
+                download_highwind_mapping.config(state="normal")
                 return
 
             file_size_dl += len(data)
@@ -200,7 +193,7 @@ class Downloader:
         self.fp.close()  # if download is stopped the file should be closed
 
         if not self.stop_down:
-            logging.info("Filter was downloaded")
+            my_logger.info("Filter was downloaded")
             stop_button.config(state="disabled")
 
             if os.path.exists(file_path):
@@ -224,11 +217,12 @@ class Downloader:
                     else:
                         statusbar_label.config(text="The filter is the same as the older one")
             else:
-                util.writeError("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind)
+                util.writeError("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping)
         else:
             statusbar_label.config(text="Download was stopped by user")
 
         download_highwind.config(state="normal")
+        download_highwind_mapping.config(state="normal")
 
     def cancel(self):
         self.stop_down = True
@@ -236,7 +230,7 @@ class Downloader:
 
 @atexit.register
 def goodbye():
-    logging.info('Downloader stopped')
+    my_logger.info('Downloader stopped')
 
 
 class Application:
@@ -301,13 +295,13 @@ class Application:
         menubar.add_cascade(label="File", menu=quit_menu)
 
         tools_menu = tk.Menu(menubar, tearoff=0)
-        tools_menu.add_command(label="Open POE installation directory...", command=self.open_poe_installation_directory)
         tools_menu.add_command(label="Open POE filter directory...", command=self.open_poe_filter_directory)
 
         menubar.add_cascade(label="Tools", menu=tools_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="About Downloader", command=lambda: self.about_downloader())
+        help_menu.add_command(label="Show Downloader's home page at github", command=lambda: self.downloader_homepage())
         menubar.add_cascade(label="Help", menu=help_menu)
         self.frame.pack(fill=tk.X)
 
@@ -390,7 +384,7 @@ class Application:
         elif msgbox_type == "warning":
             tkMessageBox.showwarning(title=title, message=message, parent=window)
         else:
-            logging.error("Unkown type was passed to showMsgBox method")
+            my_logger.error("Unkown type was passed to showMsgBox method")
             return
 
         self.root.update()
@@ -400,10 +394,21 @@ class Application:
         window.wm_withdraw()
 
         window.geometry("1x1+200+200")
-        tkMessageBox.showinfo(title="About Downloader", \
-        message="Downloader V" + DLER_VERSION + \
-        "\n\nBy Ixoth\n\nCopyright (C) 2018", parent=window)
+        tkMessageBox.showinfo(title="About Downloader", message="Downloader V" + DLER_VERSION + "\n\nBy Ixoth\n\nCopyright (C) 2018", parent=window)
         self.root.update()
+
+    def downloader_homepage(self):
+        url = "https://github.com/arsirantala/downloader"
+
+        if platform == 'win32':
+            os.startfile(url)
+        elif platform == 'darwin':
+            subprocess.Popen(['open', url])
+        else:
+            try:
+                subprocess.Popen(['xdg-open', url])
+            except OSError:
+                my_logger.error("Was not able to open default browser!")
 
     @staticmethod
     def show_ask_question(title, message):
@@ -411,23 +416,11 @@ class Application:
         return var
 
     def prep_dl_thread(self, url, filename):
-        """
-        if self.dled_file_is_same_size_as_in_s3(url, filename):
-            if not self.show_ask_question("Downloaded file is the same as in S3", \
-            "The file is already downloaded to temp directory and its the same size as is in S3, \
-            are you sure you wish to redownload it? \
-            (click no to start the downloaded installer instead)"):
-                temp_dir = tempfile.gettempdir()
-                file_path = temp_dir + '/' + filename
-
-                util = Utility()
-        """
-
         self.stop_button.config(state="normal")
         self.root.update()
 
         self.down = Downloader()
-        self.down.download(url, filename, self.download_highwind, self.progressbar,
+        self.down.download(url, filename, self.download_highwind, self.download_highwind_mapping, self.progressbar,
                            self.downloadstatus_Label, self.stop_button, self.statusbar_label, self.root)
 
     def download_highwind_filter(self, variant):
@@ -440,17 +433,6 @@ class Application:
         elif variant == "Highwind mapping filter":
             self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_mapping_filter.filter", "highwind_mapping.filter")
 
-    def open_poe_installation_directory(self):
-        util = Utility()
-        path = util.get_poe_installation_directoryname().replace("\\", "\"").encode("utf-8")
-
-        if len(path) == 0:
-            self.show_msgbox("Can't find POE installation", \
-                             "Can't find from Windows registry where the POE installation is located!", 200, 200, "error")
-            return
-
-        subprocess.call(['explorer', path])
-
     def open_poe_filter_directory(self):
         buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
         ctypes.windll.shell32.SHGetFolderPathW(0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, buf)
@@ -458,28 +440,26 @@ class Application:
         if os.path.exists(path):
             subprocess.call(['explorer', path])
         else:
-            self.show_msgbox("Can't find POE filter directory", \
-                             "The default POE filter directory doesn't exist!", 200, 200, "error")
-
-
-def get_version_string(filename):
-    file_path = tempfile.gettempdir() + '/' + filename
-    if os.path.exists(file_path):
-        util = Utility()
-        version = ".".join([str(i) for i in util.get_version_number(file_path)])
-        return version
-    else:
-        return "Unknown"
+            self.show_msgbox("Can't find POE filter directory", "The default POE filter directory doesn't exist!", 200, 200, "error")
 
 
 if __name__ == "__main__":
-    home = expanduser("~")
+    # Add the log message handler to the logger
+    handler = logging.handlers.RotatingFileHandler(os.path.basename(sys.argv[0]).replace(".py", ".out").replace(".exe", ".out"), maxBytes=2000000, backupCount=10)
+    my_logger = logging.getLogger(os.path.basename(sys.argv[0]).replace(".py", "").replace(".exe", ".out"))
+    my_logger.setLevel(logging.INFO)
 
-    logging.basicConfig(filename=home + '/Downloader.log', level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%d.%m.%Y %H:%M:%S')
-    logging.info('Downloader started')
+    # create a logging format
+    formatter = logging.Formatter('%(asctime)s %(message)s', datefmt='%d.%m.%Y %I:%M:%S %p')
+    handler.setFormatter(formatter)
+
+    # add the handlers to the logger
+    my_logger.addHandler(handler)
+
+    my_logger.info('Downloader started')
 
     if platform != 'win32':
-        logging.error("Unsupported OS")
+        my_logger.error("Unsupported OS")
         sys.exit()
 
     myObj = Application()
