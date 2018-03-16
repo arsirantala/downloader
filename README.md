@@ -51,6 +51,6 @@ If you now start the Downloader.exe in dist directory, AntiVirus software most l
 
 In case you keep getting an error: "Failed to execute script DLer", run the DLer.py script (in the directory where you cloned this repository) by using the command: **python.exe DLer.py**
 
-**(Again make sure the scripts directory in virtual environment is in system path that the pyinstaller can be found by the makeExecutable.bat file)**
+**(Again make sure the scripts directory in virtual environment is in system path that the python.exe can be found)**
 
 And see what python reports as an error (most likely the requests module is not installed).
