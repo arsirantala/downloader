@@ -23,4 +23,8 @@ I am focusing in the near future to further develop the UI version of the script
 
 **Q**: The <antivirus program's name> quarantined the Downloader, why?
 
-**A**: The binary version of the downloader is not codesigned. As the downloader downloads file from the internet the Antivirus sees this a possible malware program.
+**A**: The binary version of the downloader is not codesigned. As the downloader downloads file from the internet the Antivirus sees this as a possible malware program. You can make the executable version of the downloader by running the makeExecutable.bat batch file - you need python2.7 (make sure you have python.exe in system path) and pyinstaller installed (install pyinstaller with pip). There is also modules which the script uses, which are required to be installed (with pip again) in order to be able to make the executable version of the downloader (modules such as logging, requests, etc).
+
+**Q**: I cannot get the makeExecutable.bat work, the binary is generated in dist but when I start it, I get an error
+
+**A**: Make sure that all the required modules are installed. See with pip which modules are installed, and install all the modules what the script uses (see the import section in the script). The executable might also suddenly get closed without any apparent reason - this might be due Antivirus blocking the executable thinking it as a malware (seen it happen in my own computer). Only fix for such is to have the directory/executable be exluded in the Antivirus program.
