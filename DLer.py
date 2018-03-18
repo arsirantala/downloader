@@ -30,11 +30,12 @@ import threading
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.5"
+DLER_VERSION = "1.0.6"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT= 0   # Want current, not default value
 #  <- Constants
 
+# Globals
 
 class Utility:
     # From http://stackoverflow.com/questions/5194057/better-way-to-convert-file-sizes-in-python
@@ -84,6 +85,11 @@ class Utility:
             buf = afile.read()
             hasher.update(buf)
         return hasher.hexdigest()
+
+    @staticmethod
+    def gmt_to_epoch(gmt):
+        temp_time = time.strptime(gmt, "%a, %d %b %Y %H:%M:%S %Z")
+        return time.mktime(temp_time)
 
 class Downloader:
     def __init__(self):
@@ -392,10 +398,17 @@ class Application:
 
     def update_all_filters_files(self):
         self.update_all_filters.config(state="disabled")
-        # self.statusbar_label.config(text="Updating filters...")
-        self.show_msgbox("No implemented feature", "Sorry feature is not yet implemented. Manually click button below progressbar, to update each respective filter", 200, 200, "error")
+
+        self.download_highwind_filter("Highwind filter")
+        self.root.update()
+        self.download_highwind_filter("Highwind mapping filter")
+        self.root.update()
+        self.download_highwind_filter("Highwind strict filter")
+        self.root.update()
+        self.download_highwind_filter("Highwind very strict filter")
+        self.root.update()
+
         self.update_all_filters.config(state="normal")
-        # self.statusbar_label.config(text="Filters were updated")
 
     def check_filter_updates(self):
         self.download_highwind.config(state="disabled")
@@ -425,7 +438,8 @@ class Application:
 
         length = long(length)
         size_label.config(text=self.file_size(length))
-        mod_label.config(text=self.modified_date(util.get_last_modified_date_in_url(url)))
+        mod_time = util.get_last_modified_date_in_url(url)
+        mod_label.config(text=self.modified_date(mod_time))
 
     def set_content_to_label(self, variant, label):
         util = Utility()
@@ -434,7 +448,8 @@ class Application:
         ctypes.windll.shell32.SHGetFolderPathW(0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, buf)
         path = buf.value + "\My Games\Path of Exile\\" + variant + ".filter"
         if os.path.exists(path):
-            label.config(text="Your " + variant + " filter file last modified time: %s" % time.ctime(util.get_last_modified_date_in_file(path)))
+            mod_time = util.get_last_modified_date_in_file(path)
+            label.config(text="Your " + variant + " filter file last modified time: %s" % time.ctime(mod_time))
         else:
             label.config(text="Your " + variant + " filter file is not found")
 
