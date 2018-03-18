@@ -25,11 +25,12 @@ import urllib2
 from _socket import timeout
 from shutil import copyfile
 from sys import platform
+import threading
 
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.3"
+DLER_VERSION = "1.0.5"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT= 0   # Want current, not default value
 #  <- Constants
@@ -40,13 +41,15 @@ class Utility:
     def __init__(self):
         pass
 
-    def writeError(self, msg, statusbar_label, root, stop_button, download_highwind, download_highwind_mapper, download_highwind_strict, download_highwind_very_strict):
+    def writeError(self, msg, statusbar_label, root, stop_button, download_highwind, download_highwind_mapper, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters):
         statusbar_label.config(text=msg)
         stop_button.config(state="disabled")
         download_highwind.config(state="normal")
         download_highwind_mapper.config(state="normal")
         download_highwind_strict.config(state="normal")
         download_highwind_very_strict.config(state="normal")
+        check_updates.config(state="normal")
+        update_all_filters.config(state="normal")
         root.update()
         my_logger.error(msg)
 
@@ -87,12 +90,12 @@ class Downloader:
         self.stop_down = False
         self.thread = None
 
-    def download(self, url, destination, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
+    def download(self, url, destination, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
 
-        self.thread = threading.Thread(target=self.__down, args=(url, destination, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, progressbar, downloadstatus_label, stop_button, statusbar_label, root))
+        self.thread = threading.Thread(target=self.__down, args=(url, destination, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters, progressbar, downloadstatus_label, stop_button, statusbar_label, root))
         self.thread.start()
 
-    def __down(self, url, dest, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
+    def __down(self, url, dest, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
 
         util = Utility()
 
@@ -102,6 +105,8 @@ class Downloader:
         download_highwind_mapping.config(state="disabled")
         download_highwind_strict.config(state="disabled")
         download_highwind_very_strict.config(state="disabled")
+        check_updates.config(state="disabled")
+        update_all_filters.config(state="disabled")
 
         _continue = True
         try:
@@ -117,7 +122,7 @@ class Downloader:
             size = long(handler.headers['content-length'])
         else:
             no_content_length = True
-            my_logger.info("content-length was not found from headers! Can't show download status")
+            my_logger.info("content-length was not found from headers! Can't show download progress")
 
         temp_dir = tempfile.gettempdir()
         file_path = temp_dir + '/' + dest
@@ -190,7 +195,7 @@ class Downloader:
                                                      str(util.get_human_readable(kbs)) + "/s]")
 
             else:
-                if no_content_length == False:
+                if not no_content_length:
                     downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " + p1 + " bytes of " + p2)
                 else:
                     downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " + p1 + " bytes of Unknown")
@@ -235,6 +240,8 @@ class Downloader:
         download_highwind_mapping.config(state="normal")
         download_highwind_strict.config(state="normal")
         download_highwind_very_strict.config(state="normal")
+        check_updates.config(state="normal")
+        update_all_filters.config(state="normal")
 
     def cancel(self):
         self.stop_down = True
@@ -258,7 +265,7 @@ class Application:
     def __init__(self):
         self.root = tk.Tk()
 
-        self.root.title("Downloader")
+        self.root.title("Path of Exile Highwind filter Downloader")
         self.root.resizable(0, 0)
 
         self.frame = tk.Frame(self.root, bg="blue")
@@ -270,43 +277,51 @@ class Application:
         self.downloadstatus_Label = tk.Label(self.frame, text="", bg="blue", fg="white")
         self.downloadstatus_Label.grid(row=2, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
-        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("Highwind filter"), width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("Highwind filter"), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind.grid(row=3, column=0, pady=15)
-        self.download_highwind_mapping = tk.Button(self.frame, text="Highwind mapping filter", command=lambda: self.download_highwind_filter("Highwind mapping filter"), width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_mapping = tk.Button(self.frame, text="Highwind mapping filter", command=lambda: self.download_highwind_filter("Highwind mapping filter"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind_mapping.grid(row=3, column=1, pady=15)
-        self.download_highwind_strict = tk.Button(self.frame, text="Highwind strict filter", command=lambda: self.download_highwind_filter("Highwind strict filter"), width=17, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_strict = tk.Button(self.frame, text="Highwind strict filter", command=lambda: self.download_highwind_filter("Highwind strict filter"), state=tk.DISABLED, width=17, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind_strict.grid(row=3, column=2, pady=15)
-        self.download_highwind_very_strict = tk.Button(self.frame, text="Highwind very strict filter", command=lambda: self.download_highwind_filter("Highwind very strict filter"), width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_very_strict = tk.Button(self.frame, text="Highwind very strict filter", command=lambda: self.download_highwind_filter("Highwind very strict filter"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind_very_strict.grid(row=3, column=3, pady=15)
 
         highwind_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
-        highwind_labelframe.grid(row=4, column=0, padx=2, pady=2)
+        highwind_labelframe.grid(row=4, column=0, padx=4, pady=15, sticky=tk.N+tk.E+tk.W)
         self.highwind_last_mod_label = tk.Label(highwind_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_last_mod_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_size_label = tk.Label(highwind_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
+        self.highwind_size_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_size_label.pack(fill=tk.X, side=tk.TOP)
+        highwind_labelframe.grid_propagate(False)
         highwind_mapping_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
-        highwind_mapping_labelframe.grid(row=4, column=1, padx=2, pady=2)
+        highwind_mapping_labelframe.grid(row=4, column=1, padx=4, pady=15, sticky=tk.N+tk.E+tk.W)
         self.highwind_mapping_last_mod_label = tk.Label(highwind_mapping_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_mapping_last_mod_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_mapping_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_mapping_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_mapping_size_label = tk.Label(highwind_mapping_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
+        self.highwind_mapping_size_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_mapping_size_label.pack(fill=tk.X, side=tk.TOP)
+        highwind_mapping_labelframe.grid_propagate(False)
         highwind_strict_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
-        highwind_strict_labelframe.grid(row=4, column=2, padx=2, pady=2)
+        highwind_strict_labelframe.grid(row=4, column=2, padx=4, pady=15, sticky=tk.N+tk.E+tk.W)
         self.highwind_strict_last_mod_label = tk.Label(highwind_strict_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_strict_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_strict_size_label = tk.Label(highwind_strict_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
+        self.highwind_strict_size_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_strict_size_label.pack(fill=tk.X, side=tk.TOP)
+        highwind_strict_labelframe.grid_propagate(False)
         highwind_very_strict_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
-        highwind_very_strict_labelframe.grid(row=4, column=3, padx=2, pady=2)
+        highwind_very_strict_labelframe.grid(row=4, column=3, padx=4, pady=15, sticky=tk.N+tk.E+tk.W)
         self.highwind_very_strict_last_mod_label = tk.Label(highwind_very_strict_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_very_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_very_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_very_strict_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_very_strict_size_label = tk.Label(highwind_very_strict_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
+        self.highwind_very_strict_size_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_very_strict_size_label.pack(fill=tk.X, side=tk.TOP)
+        highwind_very_strict_labelframe.grid_propagate(False)
 
         self.highwind_last_modified_label = tk.Label(self.frame, text="Your Highwind filter: Not found", font="-weight bold", bg="blue", fg="white")
         self.highwind_last_modified_label.grid(row=5, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
@@ -317,11 +332,16 @@ class Application:
         self.highwind_very_strict_last_modified_label = tk.Label(self.frame, text="Your Highwind very strict filter: Not found", font="-weight bold", bg="blue", fg="white")
         self.highwind_very_strict_last_modified_label.grid(row=8, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
+        self.check_updates = tk.Button(self.frame, text="Check for updates", command=lambda: self.check_filter_updates(), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.check_updates.grid(row=9, column=0, columnspan=2, pady=5)
+        self.update_all_filters = tk.Button(self.frame, text="Update all old filters", command=lambda: self.update_all_filters_files(), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.update_all_filters.grid(row=9, column=2, columnspan=2, pady=5)
+
         self.stop_button = tk.Button(self.frame, text="Stop", command=lambda: self.stop_download_operation(self.down), state=tk.DISABLED, width=10, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
-        self.stop_button.grid(row=9, column=0, columnspan=4, pady=10)
+        self.stop_button.grid(row=10, column=0, columnspan=4, pady=10)
 
         self.statusbar_label = tk.Label(self.frame, text="", bg="blue", fg="white")
-        self.statusbar_label.grid(row=10, column=0, columnspan=4, sticky=tk.W)
+        self.statusbar_label.grid(row=11, column=0, columnspan=4, sticky=tk.W+tk.S, pady=15)
 
         # create a top level menu
         menubar = tk.Menu(self.root)
@@ -338,21 +358,55 @@ class Application:
 
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="Show Downloader's home page at github", command=lambda: self.downloader_homepage())
+        help_menu.add_command(label="Show Highwind filter thread at Path of Exile's forums", command=lambda: self.highwind_filter_poe_forums())
         help_menu.add_separator()
         help_menu.add_command(label="About Downloader", command=lambda: self.about_downloader())
         menubar.add_cascade(label="Help", menu=help_menu)
         self.frame.pack(fill=tk.X)
+
+        self.update_labels()
+
+        t = threading.Timer(2.0, self.update_labelframes_timer_tick)
+        t.start()
+
+        self.down = None
+        self.center(self.root)
+        self.root.mainloop()
+
+    def update_labelframes_timer_tick(self):
+        self.statusbar_label.config(text="Checking for updates...")
 
         self.update_labelframes("highwind")
         self.update_labelframes("highwind_mapping")
         self.update_labelframes("highwind_strict")
         self.update_labelframes("highwind_very_strict")
 
-        self.update_labels()
+        self.download_highwind.config(state="normal")
+        self.download_highwind_mapping.config(state="normal")
+        self.download_highwind_strict.config(state="normal")
+        self.download_highwind_very_strict.config(state="normal")
+        self.check_updates.config(state="normal")
+        self.update_all_filters.config(state="normal")
 
-        self.down = None
-        self.center(self.root)
-        self.root.mainloop()
+        self.statusbar_label.config(text="Updates were checked")
+
+    def update_all_filters_files(self):
+        self.update_all_filters.config(state="disabled")
+        # self.statusbar_label.config(text="Updating filters...")
+        self.show_msgbox("No implemented feature", "Sorry feature is not yet implemented. Manually click button below progressbar, to update each respective filter", 200, 200, "error")
+        self.update_all_filters.config(state="normal")
+        # self.statusbar_label.config(text="Filters were updated")
+
+    def check_filter_updates(self):
+        self.download_highwind.config(state="disabled")
+        self.download_highwind_mapping.config(state="disabled")
+        self.download_highwind_strict.config(state="disabled")
+        self.download_highwind_very_strict.config(state="disabled")
+        self.check_updates.config(state="disabled")
+        self.update_all_filters.config(state="disabled")
+        self.root.update()
+
+        self.update_labelframes_timer_tick()
 
     def file_is_same_in_size(self, file, length):
         path = tempfile.gettempdir()
@@ -436,6 +490,8 @@ class Application:
         self.download_highwind_mapping.config(state="normal")
         self.download_highwind_strict.config(state="normal")
         self.download_highwind_very_strict.config(state="normal")
+        self.check_updates.config(state="normal")
+        self.update_all_filters.config(state="normal")
         self.root.update()
 
     def show_msgbox(self, title, message, width=200, height=200, msgbox_type="info"):
@@ -466,16 +522,11 @@ class Application:
 
     def downloader_homepage(self):
         url = "https://github.com/arsirantala/downloader"
+        os.startfile(url)
 
-        if platform == 'win32':
-            os.startfile(url)
-        elif platform == 'darwin':
-            subprocess.Popen(['open', url])
-        else:
-            try:
-                subprocess.Popen(['xdg-open', url])
-            except OSError:
-                my_logger.error("Was not able to open default browser!")
+    def highwind_filter_poe_forums(self):
+        url = "https://www.pathofexile.com/forum/view-thread/1490867"
+        os.startfile(url)
 
     @staticmethod
     def show_ask_question(title, message):
@@ -487,7 +538,7 @@ class Application:
         self.root.update()
 
         self.down = Downloader()
-        self.down.download(url, filename, self.download_highwind, self.download_highwind_mapping, self.download_highwind_strict, self.download_highwind_very_strict, self.progressbar,
+        self.down.download(url, filename, self.download_highwind, self.download_highwind_mapping, self.download_highwind_strict, self.download_highwind_very_strict, self.check_updates, self.update_all_filters, self.progressbar,
                            self.downloadstatus_Label, self.stop_button, self.statusbar_label, self.root)
 
     def download_highwind_filter(self, variant):
@@ -512,7 +563,6 @@ class Application:
             subprocess.call(['explorer', path])
         else:
             self.show_msgbox("Can't find POE filter directory", "The default POE filter directory doesn't exist!", 200, 200, "error")
-
 
 if __name__ == "__main__":
     # Add the log message handler to the logger
