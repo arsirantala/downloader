@@ -30,7 +30,7 @@ import threading
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.6"
+DLER_VERSION = "1.0.7"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT= 0   # Want current, not default value
 #  <- Constants
@@ -375,6 +375,8 @@ class Application:
         t = threading.Timer(2.0, self.update_labelframes_timer_tick)
         t.start()
 
+        self.root.protocol('WM_DELETE_WINDOW', self.root.quit)
+
         self.down = None
         self.center(self.root)
         self.root.mainloop()
@@ -456,13 +458,13 @@ class Application:
     def update_labelframes(self, variant):
         if self.have_internet():
             if variant == "highwind":
-                self.set_content_to_labelframes_labels("highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_filter.filter", self.highwind_size_label, self.highwind_last_mod_label)
+                self.set_content_to_labelframes_labels("highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Regular_Highwind.filter", self.highwind_size_label, self.highwind_last_mod_label)
             elif variant == "highwind_mapping":
-                self.set_content_to_labelframes_labels("highwind_mapping", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_mapping_filter.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label)
+                self.set_content_to_labelframes_labels("highwind_mapping", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Mapping_Highwind.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label)
             elif variant == "highwind_strict":
-                self.set_content_to_labelframes_labels("highwind_strict", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_strict_filter.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label)
+                self.set_content_to_labelframes_labels("highwind_strict", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Strict_Highwind.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label)
             elif variant == "highwind_very_strict":
-                self.set_content_to_labelframes_labels("highwind_very_strict", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_very_strict_filter.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label)
+                self.set_content_to_labelframes_labels("highwind_very_strict", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Very_Strict_Highwind.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label)
 
     def update_labels(self):
         self.set_content_to_label("highwind", self.highwind_last_modified_label)
@@ -562,13 +564,13 @@ class Application:
             return
 
         if variant == "Highwind filter":
-            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_filter.filter", "highwind.filter")
+            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Regular_Highwind.filter", "S_Regular_Highwind.filter")
         elif variant == "Highwind mapping filter":
-            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_mapping_filter.filter", "highwind_mapping.filter")
+            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Mapping_Highwind.filter", "S_Mapping_Highwind.filter")
         elif variant == "Highwind strict filter":
-            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_strict_filter.filter", "highwind_strict.filter")
+            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Strict_Highwind.filter", "S_Strict_Highwind.filter")
         elif variant == "Highwind very strict filter":
-            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/highwind's_very_strict_filter.filter", "highwind_very_strict.filter")
+            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Very_Strict_Highwind.filter", "S_Very_Strict_Highwind.filter")
 
     def open_poe_filter_directory(self):
         buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
