@@ -45,3 +45,9 @@ And see what python reports as an error (most likely the requests module is not 
 **Q**: I cannot get the makeExecutable.bat work, the binary is generated in dist but when I start it, I get an error
 
 **A**: Make sure that all the required modules are installed. See with pip which modules are installed, and install all the modules what the script uses (see the import section in the script). The executable might also suddenly get closed without any apparent reason - this might be due Antivirus blocking the executable thinking it as a malware (seen it happen in my own computer). Only fix for such is to have the directory/executable be exluded in the Antivirus program.
+
+**Q**: I'm confused what is DL2.py script?
+**A**: Its Python 2.7 version of the GUI based downloader, which is bound to be removed later. Only the Python 3 version of the script (DLer3.py) will remain (along with command line version (for ppl who don't like GUI based programs and rather use command line programs)).
+
+**Q**: When I close the Downloader from title bar's X button the Downloader is still running the task manager
+**A**: This is a bug in the downloader, it'll be fixed shortly. Just for the time being use File->Exit instead.
