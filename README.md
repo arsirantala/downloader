@@ -53,7 +53,3 @@ And see what python reports as an error (most likely the requests module is not 
 **Q**: I'm confused what is makeExecutable.bat file?
 
 **A**: Old way to convert the DL2.py to executable by using pyinstaller. During the transition to use cx_freeze instead of the pyinstaller I've left the said batch file still to the repository - but its bound to removed.
-
-**Q**: When I close the Downloader from title bar's X button the Downloader is still running the task manager
-
-**A**: This is a bug in the downloader, it'll be fixed shortly. Just for the time being use File->Exit instead.
