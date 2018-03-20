@@ -30,7 +30,7 @@ import threading
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.7"
+DLER_VERSION = "1.0.8"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT= 0   # Want current, not default value
 #  <- Constants
