@@ -5,3 +5,5 @@ build/
 download_highwind.bat
 *.out
 *.spec
+Downloader-cache/
+
