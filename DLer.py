@@ -35,6 +35,7 @@ import requests
 DLER_VERSION = "1.0.9"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT= 0   # Want current, not default value
+highwind_repository_base_url = "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters"
 #  <- Constants
 
 # Globals
@@ -486,13 +487,13 @@ class Application:
     def update_labelframes(self, variant):
         if self.have_internet():
             if variant == "S_Regular_Highwind":
-                self.set_content_to_labelframes_labels("S_Regular_Highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Regular_Highwind.filter", self.highwind_size_label, self.highwind_last_mod_label)
+                self.set_content_to_labelframes_labels("S_Regular_Highwind", highwind_repository_base_url + "/S_Regular_Highwind.filter", self.highwind_size_label, self.highwind_last_mod_label)
             elif variant == "S_Mapping_Highwind":
-                self.set_content_to_labelframes_labels("S_Mapping_Highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Mapping_Highwind.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label)
+                self.set_content_to_labelframes_labels("S_Mapping_Highwind", highwind_repository_base_url + "/S_Mapping_Highwind.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label)
             elif variant == "S_Strict_Highwind":
-                self.set_content_to_labelframes_labels("S_Strict_Highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Strict_Highwind.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label)
+                self.set_content_to_labelframes_labels("S_Strict_Highwind", highwind_repository_base_url + "/S_Strict_Highwind.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label)
             elif variant == "S_Very_Strict_Highwind":
-                self.set_content_to_labelframes_labels("S_Very_Strict_Highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/highwind's_very_strict_filter.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label)
+                self.set_content_to_labelframes_labels("S_Very_Strict_Highwind", highwind_repository_base_url + "/highwind's_very_strict_filter.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label)
             else:
                 my_logger.error("update_labelframes method. Unknown variant: " + variant)
 
@@ -595,17 +596,17 @@ class Application:
 
         util = Utility()
         if not os.path.exists(util.poe_filter_directory()):
-            self.show_msgbox("POE filter directory doesn't exist!", "Make sure the \"Path of Exile\" directory exists \"My Documents\"\\\"My Games\"!", 200, 200, "error")
+            self.show_msgbox("POE filter directory doesn't exist!", "Make sure the \"Path of Exile\" directory exists in \"My Documents\"\\\"My Games\"!", 200, 200, "error")
             return
 
         if variant == "S_Regular_Highwind":
-            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Regular_Highwind.filter", "S_Regular_Highwind.filter")
+            self.prep_dl_thread(highwind_repository_base_url + "/S_Regular_Highwind.filter", "S_Regular_Highwind.filter")
         elif variant == "S_Mapping_Highwind":
-            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Mapping_Highwind.filter", "S_Mapping_Highwind.filter")
+            self.prep_dl_thread(highwind_repository_base_url + "/S_Mapping_Highwind.filter", "S_Mapping_Highwind.filter")
         elif variant == "S_Strict_Highwind":
-            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Strict_Highwind.filter", "S_Strict_Highwind.filter")
+            self.prep_dl_thread(highwind_repository_base_url + "/S_Strict_Highwind.filter", "S_Strict_Highwind.filter")
         elif variant == "S_Very_Strict_Highwind":
-            self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Very_Strict_Highwind.filter", "S_Very_Strict_Highwind.filter")
+            self.prep_dl_thread(highwind_repository_base_url + "/S_Very_Strict_Highwind.filter", "S_Very_Strict_Highwind.filter")
         else:
             my_logger.error("download_highwind_filter. Unknown variant: " + variant)
 
