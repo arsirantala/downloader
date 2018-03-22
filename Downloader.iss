@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Highwind POE filters downloader"
-#define MyAppVersion "1.0.8"
+#define MyAppVersion "1.0.9"
 #define MyAppPublisher "Homebrew"
 #define MyAppURL "https://github.com/arsirantala/downloader"
 #define MyAppExeName "Downloader.exe"

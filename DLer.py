@@ -30,7 +30,7 @@ import threading
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.8"
+DLER_VERSION = "1.0.9"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT= 0   # Want current, not default value
 #  <- Constants
@@ -283,13 +283,13 @@ class Application:
         self.downloadstatus_Label = tk.Label(self.frame, text="", bg="blue", fg="white")
         self.downloadstatus_Label.grid(row=2, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
-        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("Highwind filter"), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("S_Regular_Highwind"), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind.grid(row=3, column=0, pady=15)
-        self.download_highwind_mapping = tk.Button(self.frame, text="Highwind mapping filter", command=lambda: self.download_highwind_filter("Highwind mapping filter"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_mapping = tk.Button(self.frame, text="Highwind mapping filter", command=lambda: self.download_highwind_filter("S_Mapping_Highwind"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind_mapping.grid(row=3, column=1, pady=15)
-        self.download_highwind_strict = tk.Button(self.frame, text="Highwind strict filter", command=lambda: self.download_highwind_filter("Highwind strict filter"), state=tk.DISABLED, width=17, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_strict = tk.Button(self.frame, text="Highwind strict filter", command=lambda: self.download_highwind_filter("S_Strict_Highwind"), state=tk.DISABLED, width=17, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind_strict.grid(row=3, column=2, pady=15)
-        self.download_highwind_very_strict = tk.Button(self.frame, text="Highwind very strict filter", command=lambda: self.download_highwind_filter("Highwind very strict filter"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_very_strict = tk.Button(self.frame, text="Highwind very strict filter", command=lambda: self.download_highwind_filter("S_Very_Strict_Highwind"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.download_highwind_very_strict.grid(row=3, column=3, pady=15)
 
         highwind_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
@@ -384,10 +384,10 @@ class Application:
     def update_labelframes_timer_tick(self):
         self.statusbar_label.config(text="Checking for updates...")
 
-        self.update_labelframes("highwind")
-        self.update_labelframes("highwind_mapping")
-        self.update_labelframes("highwind_strict")
-        self.update_labelframes("highwind_very_strict")
+        self.update_labelframes("S_Regular_Highwind")
+        self.update_labelframes("S_Mapping_Highwind")
+        self.update_labelframes("S_Strict_Highwind")
+        self.update_labelframes("S_Very_Strict_Highwind")
 
         self.download_highwind.config(state="normal")
         self.download_highwind_mapping.config(state="normal")
@@ -401,13 +401,13 @@ class Application:
     def update_all_filters_files(self):
         self.update_all_filters.config(state="disabled")
 
-        self.download_highwind_filter("Highwind filter")
+        self.download_highwind_filter("S_Regular_Highwind")
         self.root.update()
-        self.download_highwind_filter("Highwind mapping filter")
+        self.download_highwind_filter("S_Mapping_Highwind")
         self.root.update()
-        self.download_highwind_filter("Highwind strict filter")
+        self.download_highwind_filter("S_Strict_Highwind")
         self.root.update()
-        self.download_highwind_filter("Highwind very strict filter")
+        self.download_highwind_filter("S_Very_Strict_Highwind")
         self.root.update()
 
         self.update_all_filters.config(state="normal")
@@ -457,20 +457,22 @@ class Application:
 
     def update_labelframes(self, variant):
         if self.have_internet():
-            if variant == "highwind":
-                self.set_content_to_labelframes_labels("highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Regular_Highwind.filter", self.highwind_size_label, self.highwind_last_mod_label)
-            elif variant == "highwind_mapping":
-                self.set_content_to_labelframes_labels("highwind_mapping", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Mapping_Highwind.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label)
-            elif variant == "highwind_strict":
-                self.set_content_to_labelframes_labels("highwind_strict", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Strict_Highwind.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label)
-            elif variant == "highwind_very_strict":
-                self.set_content_to_labelframes_labels("highwind_very_strict", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/highwind's_very_strict_filter.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label)
+            if variant == "S_Regular_Highwind":
+                self.set_content_to_labelframes_labels("S_Regular_Highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Regular_Highwind.filter", self.highwind_size_label, self.highwind_last_mod_label)
+            elif variant == "S_Mapping_Highwind":
+                self.set_content_to_labelframes_labels("S_Mapping_Highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Mapping_Highwind.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label)
+            elif variant == "S_Strict_Highwind":
+                self.set_content_to_labelframes_labels("S_Strict_Highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Strict_Highwind.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label)
+            elif variant == "S_Very_Strict_Highwind":
+                self.set_content_to_labelframes_labels("S_Very_Strict_Highwind", "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/highwind's_very_strict_filter.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label)
+            else:
+                my_logger.error("update_labelframes method. Unknown variant: " + variant)
 
     def update_labels(self):
-        self.set_content_to_label("highwind", self.highwind_last_modified_label)
-        self.set_content_to_label("highwind_mapping", self.highwind_mapping_last_modified_label)
-        self.set_content_to_label("highwind_strict", self.highwind_strict_last_modified_label)
-        self.set_content_to_label("highwind_very_strict", self.highwind_very_strict_last_modified_label)
+        self.set_content_to_label("S_Regular_Highwind", self.highwind_last_modified_label)
+        self.set_content_to_label("S_Mapping_Highwind", self.highwind_mapping_last_modified_label)
+        self.set_content_to_label("S_Strict_Highwind", self.highwind_strict_last_modified_label)
+        self.set_content_to_label("S_Very_Strict_Highwind", self.highwind_very_strict_last_modified_label)
 
     # From http://stackoverflow.com/questions/3764291/checking-network-connection
     @staticmethod
@@ -563,14 +565,16 @@ class Application:
             self.show_msgbox("No internet connection", "Sorry feature unanavailable because of no internet connectivity", 200, 200, "error")
             return
 
-        if variant == "Highwind filter":
+        if variant == "S_Regular_Highwind":
             self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Regular_Highwind.filter", "S_Regular_Highwind.filter")
-        elif variant == "Highwind mapping filter":
+        elif variant == "S_Mapping_Highwind":
             self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Mapping_Highwind.filter", "S_Mapping_Highwind.filter")
-        elif variant == "Highwind strict filter":
+        elif variant == "S_Strict_Highwind":
             self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Strict_Highwind.filter", "S_Strict_Highwind.filter")
-        elif variant == "Highwind very strict filter":
+        elif variant == "S_Very_Strict_Highwind":
             self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Very_Strict_Highwind.filter", "S_Very_Strict_Highwind.filter")
+        else:
+            my_logger.error("download_highwind_filter. Unknown variant: " + variant)
 
     def open_poe_filter_directory(self):
         buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
