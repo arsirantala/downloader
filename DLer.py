@@ -3,6 +3,10 @@
 date: 16.3.2018
 username: Ixoth
 description: Highwind POE filter Downloader
+TODO:
+-add check to filter download button click events to check if POE filter directory is found. If it isn't found
+ then don't allow to download the filter, and give an error
+-check the file differences, and based on the outcome update the update available labels in each of the filter groups
 """
 
 import Tkinter as tk
@@ -90,6 +94,16 @@ class Utility:
     def gmt_to_epoch(gmt):
         temp_time = time.strptime(gmt, "%a, %d %b %Y %H:%M:%S %Z")
         return time.mktime(temp_time)
+
+    @staticmethod
+    def poe_filter_directory():
+        buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+        ctypes.windll.shell32.SHGetFolderPathW(0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, buf)
+        path = buf.value + "\My Games\Path of Exile"
+        if os.path.exists(path):
+            return path
+        else:
+            return None
 
 class Downloader:
     def __init__(self):
@@ -218,9 +232,7 @@ class Downloader:
 
             if os.path.exists(file_path):
                 dled_file_sha1_value = util.calculate_sha1(file_path)
-                buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
-                ctypes.windll.shell32.SHGetFolderPathW(0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, buf)
-                path = buf.value + "\My Games\Path of Exile"
+                path = util.poe_filter_directory()
                 if os.path.exists(path):
                     installed_file_path = path + "\\" + dest
                     installed_file_sha1_value = None
@@ -237,6 +249,8 @@ class Downloader:
                         statusbar_label.config(text="Installation of " + dest + " filter was completed")
                     else:
                         statusbar_label.config(text="The filter is the same as the older one")
+                else:
+                    util.writeError("Error: POE filter directory doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
             else:
                 util.writeError("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
         else:
@@ -464,10 +478,7 @@ class Application:
 
     def set_content_to_label(self, variant, label):
         util = Utility()
-
-        buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
-        ctypes.windll.shell32.SHGetFolderPathW(0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, buf)
-        path = buf.value + "\My Games\Path of Exile\\" + variant + ".filter"
+        path = util.poe_filter_directory()
         if os.path.exists(path):
             mod_time = util.get_last_modified_date_in_file(path)
             label.config(text="Your " + variant + " filter file last modified time: %s" % time.ctime(mod_time))
@@ -584,6 +595,8 @@ class Application:
             self.show_msgbox("No internet connection", "Sorry feature unanavailable because of no internet connectivity", 200, 200, "error")
             return
 
+
+
         if variant == "S_Regular_Highwind":
             self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Regular_Highwind.filter", "S_Regular_Highwind.filter")
         elif variant == "S_Mapping_Highwind":
@@ -596,9 +609,8 @@ class Application:
             my_logger.error("download_highwind_filter. Unknown variant: " + variant)
 
     def open_poe_filter_directory(self):
-        buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
-        ctypes.windll.shell32.SHGetFolderPathW(0, CSIDL_PERSONAL, 0, SHGFP_TYPE_CURRENT, buf)
-        path = buf.value + "\My Games\Path of Exile"
+        util = Utility()
+        path = util.poe_filter_directory()
         if os.path.exists(path):
             subprocess.call(['explorer', path])
         else:
