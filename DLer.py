@@ -4,8 +4,6 @@ date: 16.3.2018
 username: Ixoth
 description: Highwind POE filter Downloader
 TODO:
--add check to filter download button click events to check if POE filter directory is found. If it isn't found
- then don't allow to download the filter, and give an error
 -check the file differences, and based on the outcome update the update available labels in each of the filter groups
 """
 
@@ -103,7 +101,7 @@ class Utility:
         if os.path.exists(path):
             return path
         else:
-            return None
+            return ""
 
 class Downloader:
     def __init__(self):
@@ -250,9 +248,9 @@ class Downloader:
                     else:
                         statusbar_label.config(text="The filter is the same as the older one")
                 else:
-                    util.writeError("Error: POE filter directory doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
+                    util.writeError("Error: POE filter directory doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
             else:
-                util.writeError("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
+                util.writeError("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
         else:
             statusbar_label.config(text="Download was stopped by user")
 
@@ -595,7 +593,10 @@ class Application:
             self.show_msgbox("No internet connection", "Sorry feature unanavailable because of no internet connectivity", 200, 200, "error")
             return
 
-
+        util = Utility()
+        if not os.path.exists(util.poe_filter_directory()):
+            self.show_msgbox("POE filter directory doesn't exist!", "Make sure the \"Path of Exile\" directory exists \"My Documents\"\\\"My Games\"!", 200, 200, "error")
+            return
 
         if variant == "S_Regular_Highwind":
             self.prep_dl_thread("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters/S_Regular_Highwind.filter", "S_Regular_Highwind.filter")
