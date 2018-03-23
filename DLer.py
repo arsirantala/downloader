@@ -105,6 +105,13 @@ class Utility:
             return ""
 
 class Downloader:
+    def write_error(self, util, e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters):
+        util.writeError("Error: " + e + " occurred during download", statusbar_label, root, stop_button,
+                        download_highwind, download_highwind_mapping, download_highwind_strict,
+                        download_highwind_very_strict, check_updates, update_all_filters)
+        self._continue = False
+        self.stop_down = True
+
     def __init__(self):
         self.stop_down = False
         self.thread = None
@@ -131,9 +138,8 @@ class Downloader:
         try:
             handler = urllib2.urlopen(url, timeout=240)
         except urllib2.HTTPError, e:
-            util.writeError("Error: " + e + " occurred during download", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
-            self._continue = False
-            self.stop_down = True
+            self.write_error(util, e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
+                             download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
             return
 
         no_content_length = False
@@ -153,9 +159,8 @@ class Downloader:
         try:
             self.fp = open(file_path, "wb+")
         except:
-            util.writeError("Was not able to open temporary file for writing the filter file at " + file_path, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
-            self._continue = False
-            self.stop_down = True
+            self.write_error(util, "Was not able to open temporary file for writing the filter file at " + file_path, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
+                             download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
             return
 
         file_size_dl = 0
@@ -167,19 +172,22 @@ class Downloader:
             try:
                 data = handler.read(block_sz)
             except (urllib2.HTTPError, urllib2.URLError) as error:
-                util.writeError("Error occured while downloading the file: " + error, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
-                self._continue = False
-                self.stop_down = True
+                self.write_error(util, "Error occurred while downloading the file: " + error,
+                                 statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
+                                 download_highwind_strict, download_highwind_very_strict, check_updates,
+                                 update_all_filters)
                 return
             except timeout:
-                util.writeError("Timeout error occurred while downloading the file", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
-                self._continue = False
-                self.stop_down = True
+                self.write_error(util, "Timeout error occurred while downloading the file",
+                                 statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
+                                 download_highwind_strict, download_highwind_very_strict, check_updates,
+                                 update_all_filters)
                 return
             except Exception, e:
-                util.writeError("Exception occurred while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict)
-                self._continue = False
-                self.stop_down = True
+                self.write_error(util, "Exception occurred while downloading the file. Exception was:" + str(e),
+                                 statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
+                                 download_highwind_strict, download_highwind_very_strict, check_updates,
+                                 update_all_filters)
                 return
 
             file_size_dl += len(data)
@@ -311,7 +319,7 @@ class Application:
         self.highwind_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_size_label = tk.Label(highwind_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_size_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_size_label.config(wraplength=100, justify=tk.LEFT, height=2)
         self.highwind_size_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_update_available_label = tk.Label(highwind_labelframe, text="Update available: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_update_available_label.config(wraplength=100, justify=tk.LEFT, height=4)
@@ -323,7 +331,7 @@ class Application:
         self.highwind_mapping_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_mapping_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_mapping_size_label = tk.Label(highwind_mapping_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_mapping_size_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_mapping_size_label.config(wraplength=100, justify=tk.LEFT, height=2)
         self.highwind_mapping_size_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_mapping_update_available_label = tk.Label(highwind_mapping_labelframe, text="Update available: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_mapping_update_available_label.config(wraplength=100, justify=tk.LEFT, height=4)
@@ -335,7 +343,7 @@ class Application:
         self.highwind_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_strict_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_strict_size_label = tk.Label(highwind_strict_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_strict_size_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_strict_size_label.config(wraplength=100, justify=tk.LEFT, height=2)
         self.highwind_strict_size_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_strict_update_available_label = tk.Label(highwind_strict_labelframe, text="Update available: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_strict_update_available_label.config(wraplength=100, justify=tk.LEFT, height=4)
@@ -347,10 +355,10 @@ class Application:
         self.highwind_very_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_very_strict_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_very_strict_size_label = tk.Label(highwind_very_strict_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_very_strict_size_label.config(wraplength=100, justify=tk.LEFT)
+        self.highwind_very_strict_size_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_very_strict_size_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_very_strict_update_available_label = tk.Label(highwind_very_strict_labelframe, text="Update available: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_very_strict_update_available_label.config(wraplength=100, justify=tk.LEFT, height=4)
+        self.highwind_very_strict_update_available_label.config(wraplength=100, justify=tk.LEFT, height=2)
         self.highwind_very_strict_update_available_label.pack(fill=tk.X, side=tk.TOP)
         highwind_very_strict_labelframe.grid_propagate(False)
 
@@ -471,7 +479,7 @@ class Application:
             return
 
         length = long(length)
-        size_label.config(text=self.file_size(length))
+        size_label.config(text=self.file_size(length) + " gziped")
         mod_time = util.get_last_modified_date_in_url(url)
         mod_label.config(text=self.modified_date(mod_time))
 
@@ -493,7 +501,7 @@ class Application:
             elif variant == "S_Strict_Highwind":
                 self.set_content_to_labelframes_labels("S_Strict_Highwind", highwind_repository_base_url + "/S_Strict_Highwind.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label)
             elif variant == "S_Very_Strict_Highwind":
-                self.set_content_to_labelframes_labels("S_Very_Strict_Highwind", highwind_repository_base_url + "/highwind's_very_strict_filter.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label)
+                self.set_content_to_labelframes_labels("S_Very_Strict_Highwind", highwind_repository_base_url + "/S_Very_Strict_Highwind.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label)
             else:
                 my_logger.error("update_labelframes method. Unknown variant: " + variant)
 
