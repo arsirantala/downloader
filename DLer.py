@@ -300,7 +300,7 @@ class Application:
         self.root.resizable(0, 0)
 
         self.frame = tk.Frame(self.root, bg="blue")
-        tk.Label(self.frame, text="Welcome to Downloader. Click button below to download and install Highwind filter", bg="blue", fg="white").grid(row=0, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
+        tk.Label(self.frame, text="Welcome to Downloader. Click button below to download filter(s) and have them copied to POE filters folder", bg="blue", fg="white", font="Helvetica 12 bold").grid(row=0, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
         self.progressbar = ttk.Progressbar(self.frame, length=650, maximum=100)
         self.progressbar.grid(row=1, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
@@ -423,6 +423,9 @@ class Application:
 
         self.down = None
         self.center(self.root)
+
+        self.root.lift()
+
         self.root.mainloop()
 
     def update_labelframes_timer_tick(self):
