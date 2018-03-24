@@ -340,6 +340,7 @@
 		<col def="S0">ISDotNetInstallerArgsCommit</col>
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
+		<row><td>AllOtherFiles</td><td>{4CD4518A-589D-4987-996E-A3D92017C363}</td><td>LocalAppDataFolder</td><td>8</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>Downloader.exe</td><td>{F5527E48-5DD1-4C6D-862A-53BFC5ACC624}</td><td>INSTALLDIR</td><td>8</td><td/><td>downloader.exe</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>IS_ININSTALL_SHORTCUT</td><td>{11220F64-0F67-4AC7-8C03-BE97E58DF231}</td><td>INSTALLDIR</td><td>8</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 	</table>
@@ -1010,6 +1011,7 @@
 		<col key="yes" def="s72">Directory_</col>
 		<col key="yes" def="s72">Component_</col>
 		<row><td>INSTALLDIR</td><td>IS_ININSTALL_SHORTCUT</td></row>
+		<row><td>LocalAppDataFolder</td><td>AllOtherFiles</td></row>
 	</table>
 
 	<table name="CustomAction">
@@ -1109,7 +1111,7 @@
 		<row><td>ISYourDataBaseDir</td><td>INSTALLDIR</td><td>Database</td><td/><td>0</td><td/></row>
 		<row><td>LocalAppDataFolder</td><td>TARGETDIR</td><td>.:LocalA~1|LocalAppData</td><td/><td>0</td><td/></row>
 		<row><td>MY_PRODUCT_NAME</td><td>SUUNTO_OY</td><td>MYPROD~1|My Product Name</td><td/><td>0</td><td/></row>
-		<row><td>MY_PRODUCT_NAME1</td><td>ProgramFilesFolder</td><td>HIGHWI~1|Highwind POE filter downloader</td><td/><td>0</td><td/></row>
+		<row><td>MY_PRODUCT_NAME1</td><td>LocalAppDataFolder</td><td>HIGHWI~1|Highwind POE filter downloader</td><td/><td>0</td><td/></row>
 		<row><td>MyPicturesFolder</td><td>TARGETDIR</td><td>.:MyPict~1|MyPictures</td><td/><td>0</td><td/></row>
 		<row><td>PersonalFolder</td><td>TARGETDIR</td><td>.:Personal</td><td/><td>0</td><td/></row>
 		<row><td>PrimaryVolumePath</td><td>TARGETDIR</td><td>.:Primar~1|PrimaryVolumePath</td><td/><td>0</td><td/></row>
@@ -1821,6 +1823,7 @@
 	<table name="FeatureComponents">
 		<col key="yes" def="s38">Feature_</col>
 		<col key="yes" def="s72">Component_</col>
+		<row><td>Downloader_Files</td><td>AllOtherFiles</td></row>
 		<row><td>Downloader_Files</td><td>Downloader.exe</td></row>
 		<row><td>Downloader_Files</td><td>IS_ININSTALL_SHORTCUT</td></row>
 	</table>
@@ -1985,6 +1988,7 @@
 		<col def="S0">FTPLocation</col>
 		<col def="S0">HTTPLocation</col>
 		<col def="S0">Miscellaneous</col>
+		<row><td>AllOtherFiles</td><td/><td/><td>_AB8CAE15_A78F_4A0D_BAE1_9EA8F44C9254_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>Downloader.exe</td><td/><td/><td>_EB84591F_0781_49C5_99FE_27371076DC01_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>IS_ININSTALL_SHORTCUT</td><td/><td/><td>_169F4286_5508_4E85_BB75_FA4745EE1BDF_FILTER</td><td/><td/><td/><td/></row>
 	</table>
@@ -4335,7 +4339,7 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<row><td>ProductID</td><td>none</td><td/></row>
 		<row><td>ProductLanguage</td><td>1033</td><td/></row>
 		<row><td>ProductName</td><td>Highwind POE filter Downloader</td><td/></row>
-		<row><td>ProductVersion</td><td>1.0.9</td><td/></row>
+		<row><td>ProductVersion</td><td>1.0.10</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
 		<row><td>ProgressType1</td><td>Installing</td><td/></row>
 		<row><td>ProgressType2</td><td>installed</td><td/></row>
@@ -4618,7 +4622,7 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col def="S255">Remove</col>
 		<col def="s72">ActionProperty</col>
 		<col def="S72">ISDisplayName</col>
-		<row><td>{00000000-0000-0000-0000-000000000000}</td><td>1.0.9</td><td></td><td>1035,1033</td><td>2</td><td/><td>FOUNDNEWERPRODUCTVERSION</td><td>ISPreventDowngrade</td></row>
+		<row><td>{00000000-0000-0000-0000-000000000000}</td><td>1.0.10</td><td></td><td>1035,1033</td><td>2</td><td/><td>FOUNDNEWERPRODUCTVERSION</td><td>ISPreventDowngrade</td></row>
 	</table>
 
 	<table name="Verb">

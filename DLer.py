@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import threading
 import time
 import tkMessageBox
 import ttk
@@ -27,18 +28,17 @@ import urllib2
 from _socket import timeout
 from shutil import copyfile
 from sys import platform
-import threading
 
+import configparser
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.9"
+DLER_VERSION = "1.0.10"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT= 0   # Want current, not default value
 highwind_repository_base_url = "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters"
 #  <- Constants
 
-# Globals
 
 class Utility:
     # From http://stackoverflow.com/questions/5194057/better-way-to-convert-file-sizes-in-python
@@ -69,6 +69,10 @@ class Utility:
     @staticmethod
     def get_file_size_in_url(base_url):
         return requests.get(base_url, stream=True).headers['Content-length']
+
+    @staticmethod
+    def get_etag_in_url(base_url):
+        return requests.get(base_url, stream=True).headers['ETag']
 
     @staticmethod
     def get_last_modified_date_in_url(base_url):
@@ -355,10 +359,10 @@ class Application:
         self.highwind_very_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_very_strict_last_mod_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_very_strict_size_label = tk.Label(highwind_very_strict_labelframe, text="Size: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_very_strict_size_label.config(wraplength=100, justify=tk.LEFT, height=4)
+        self.highwind_very_strict_size_label.config(wraplength=100, justify=tk.LEFT, height=2)
         self.highwind_very_strict_size_label.pack(fill=tk.X, side=tk.TOP)
         self.highwind_very_strict_update_available_label = tk.Label(highwind_very_strict_labelframe, text="Update available: Unknown", anchor="w", bg="blue", fg="white")
-        self.highwind_very_strict_update_available_label.config(wraplength=100, justify=tk.LEFT, height=2)
+        self.highwind_very_strict_update_available_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_very_strict_update_available_label.pack(fill=tk.X, side=tk.TOP)
         highwind_very_strict_labelframe.grid_propagate(False)
 
@@ -415,7 +419,7 @@ class Application:
         t = threading.Timer(2.0, self.update_labelframes_timer_tick)
         t.start()
 
-        self.root.protocol('WM_DELETE_WINDOW', self.root.quit)
+        self.root.protocol("WM_DELETE_WINDOW", self.root.quit)
 
         self.down = None
         self.center(self.root)
@@ -471,7 +475,7 @@ class Application:
         else:
             return False
 
-    def set_content_to_labelframes_labels(self, variant, url, size_label, mod_label):
+    def set_content_to_labelframes_labels(self, variant, url, size_label, mod_label, updated_available_label):
         util = Utility()
         length = util.get_file_size_in_url(url)
 
@@ -482,6 +486,37 @@ class Application:
         size_label.config(text=self.file_size(length) + " gziped")
         mod_time = util.get_last_modified_date_in_url(url)
         mod_label.config(text=self.modified_date(mod_time))
+        etag = util.get_etag_in_url(url)
+
+        config_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
+        cfgfile = open(config_filename, "r")
+        Config.read(config_filename)
+        old_etag = Config.get("Filter_etags", variant)
+        old_date = Config.get("Filter_dates", variant)
+        old_size = Config.get("Filter_gzip_sizes", variant)
+        cfgfile.close()
+
+        if len(old_etag) > 0 and len(old_date) > 0 and len(old_size) > 0:
+            if old_etag != etag and old_date != mod_time and old_size != length:
+                updated_available_label.config(text="Update available: YES")
+            else:
+                util = Utility()
+                path = util.poe_filter_directory() + "\\" + variant + ".filter"
+                if not os.path.exists(path):
+                    updated_available_label.config(text="Update available: YES")
+                else:
+                    updated_available_label.config(text="Update available: NO")
+        else:
+            updated_available_label.config(text="Update available: Unknown")
+
+        # config_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
+        cfgfile = open(config_filename, "w")
+        Config.read(config_filename)
+        Config.set("Filter_etags", variant, etag)
+        Config.set("Filter_dates", variant, str(mod_time))
+        Config.set("Filter_gzip_sizes", variant, str(length))
+        Config.write(cfgfile)
+        cfgfile.close()
 
     def set_content_to_label(self, variant, label):
         util = Utility()
@@ -495,13 +530,13 @@ class Application:
     def update_labelframes(self, variant):
         if self.have_internet():
             if variant == "S_Regular_Highwind":
-                self.set_content_to_labelframes_labels("S_Regular_Highwind", highwind_repository_base_url + "/S_Regular_Highwind.filter", self.highwind_size_label, self.highwind_last_mod_label)
+                self.set_content_to_labelframes_labels("S_Regular_Highwind", highwind_repository_base_url + "/S_Regular_Highwind.filter", self.highwind_size_label, self.highwind_last_mod_label, self.highwind_update_available_label)
             elif variant == "S_Mapping_Highwind":
-                self.set_content_to_labelframes_labels("S_Mapping_Highwind", highwind_repository_base_url + "/S_Mapping_Highwind.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label)
+                self.set_content_to_labelframes_labels("S_Mapping_Highwind", highwind_repository_base_url + "/S_Mapping_Highwind.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label, self.highwind_mapping_update_available_label)
             elif variant == "S_Strict_Highwind":
-                self.set_content_to_labelframes_labels("S_Strict_Highwind", highwind_repository_base_url + "/S_Strict_Highwind.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label)
+                self.set_content_to_labelframes_labels("S_Strict_Highwind", highwind_repository_base_url + "/S_Strict_Highwind.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label, self.highwind_strict_update_available_label)
             elif variant == "S_Very_Strict_Highwind":
-                self.set_content_to_labelframes_labels("S_Very_Strict_Highwind", highwind_repository_base_url + "/S_Very_Strict_Highwind.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label)
+                self.set_content_to_labelframes_labels("S_Very_Strict_Highwind", highwind_repository_base_url + "/S_Very_Strict_Highwind.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label, self.highwind_very_strict_update_available_label)
             else:
                 my_logger.error("update_labelframes method. Unknown variant: " + variant)
 
@@ -640,6 +675,40 @@ if __name__ == "__main__":
     my_logger.addHandler(handler)
 
     my_logger.info('Downloader started')
+
+    # Attempt to read the configuration file. If it doesn't exist, it'll be created (and default values are used)
+    Config = configparser.ConfigParser()
+    Config._interpolation = configparser.ExtendedInterpolation()
+
+    config_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
+
+    if not os.path.exists(config_filename):
+        my_logger.info("Config file %s was not found. Creating it (using default values)" % config_filename)
+        cfgfile = open(config_filename, "w")
+        Config.add_section("Filter_etags")
+        Config.set("Filter_etags", "S_Regular_Highwind", "")
+        Config.set("Filter_etags", "S_Mapping_Highwind", "")
+        Config.set("Filter_etags", "S_Strict_Highwind", "")
+        Config.set("Filter_etags", "S_Very_Strict_Highwind", "")
+
+        Config.add_section("Filter_dates")
+        Config.set("Filter_dates", "S_Regular_Highwind", "")
+        Config.set("Filter_dates", "S_Mapping_Highwind", "")
+        Config.set("Filter_dates", "S_Strict_Highwind", "")
+        Config.set("Filter_dates", "S_Very_Strict_Highwind", "")
+
+        Config.add_section("Filter_gzip_sizes")
+        Config.set("Filter_gzip_sizes", "S_Regular_Highwind", "")
+        Config.set("Filter_gzip_sizes", "S_Mapping_Highwind", "")
+        Config.set("Filter_gzip_sizes", "S_Strict_Highwind", "")
+        Config.set("Filter_gzip_sizes", "S_Very_Strict_Highwind", "")
+
+        try:
+            Config.write(cfgfile)
+        except:
+            my_logger.error("Error occured while trying to write file %s" % config_filename)
+
+        cfgfile.close()
 
     if platform != 'win32':
         my_logger.error("Unsupported OS")
