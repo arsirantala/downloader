@@ -308,13 +308,13 @@ class Application:
         self.downloadstatus_Label = tk.Label(self.frame, text="", bg="blue", fg="white")
         self.downloadstatus_Label.grid(row=2, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
-        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("S_Regular_Highwind"), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("S_Regular_Highwind"), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.download_highwind.grid(row=3, column=0, pady=15)
-        self.download_highwind_mapping = tk.Button(self.frame, text="Highwind mapping filter", command=lambda: self.download_highwind_filter("S_Mapping_Highwind"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_mapping = tk.Button(self.frame, text="Highwind mapping filter", command=lambda: self.download_highwind_filter("S_Mapping_Highwind"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.download_highwind_mapping.grid(row=3, column=1, pady=15)
-        self.download_highwind_strict = tk.Button(self.frame, text="Highwind strict filter", command=lambda: self.download_highwind_filter("S_Strict_Highwind"), state=tk.DISABLED, width=17, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_strict = tk.Button(self.frame, text="Highwind strict filter", command=lambda: self.download_highwind_filter("S_Strict_Highwind"), state=tk.DISABLED, width=17, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.download_highwind_strict.grid(row=3, column=2, pady=15)
-        self.download_highwind_very_strict = tk.Button(self.frame, text="Highwind very strict filter", command=lambda: self.download_highwind_filter("S_Very_Strict_Highwind"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.download_highwind_very_strict = tk.Button(self.frame, text="Highwind very strict filter", command=lambda: self.download_highwind_filter("S_Very_Strict_Highwind"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.download_highwind_very_strict.grid(row=3, column=3, pady=15)
 
         highwind_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
@@ -382,12 +382,12 @@ class Application:
         self.highwind_very_strict_last_modified_label.pack(fill=tk.X, side=tk.TOP)
         local_filter_files_labelframe.grid_propagate(False)
 
-        self.check_updates = tk.Button(self.frame, text="Check for updates", command=lambda: self.check_filter_updates(), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.check_updates = tk.Button(self.frame, text="Check for updates", command=lambda: self.check_filter_updates(), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.check_updates.grid(row=6, column=0, columnspan=2, pady=5)
-        self.update_all_filters = tk.Button(self.frame, text="Update all old filters", command=lambda: self.update_all_filters_files(), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.update_all_filters = tk.Button(self.frame, text="Update all old filters", command=lambda: self.update_all_filters_files(), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.update_all_filters.grid(row=6, column=2, columnspan=2, pady=5)
 
-        self.stop_button = tk.Button(self.frame, text="Stop", command=lambda: self.stop_download_operation(self.down), state=tk.DISABLED, width=10, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
+        self.stop_button = tk.Button(self.frame, text="Stop", command=lambda: self.stop_download_operation(self.down), state=tk.DISABLED, width=10, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.stop_button.grid(row=7, column=0, columnspan=4, pady=5)
 
         self.statusbar_label = tk.Label(self.root, text="", bg="blue", fg="white", bd=1, relief=tk.SUNKEN, anchor=tk.W)
