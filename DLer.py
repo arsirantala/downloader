@@ -298,6 +298,7 @@ class Application:
 
         self.root.title("Path of Exile Highwind filter Downloader")
         self.root.resizable(0, 0)
+        self.root.attributes('-alpha', 0.85)
 
         self.frame = tk.Frame(self.root, bg="blue")
         tk.Label(self.frame, text="Welcome to Downloader. Click button below to download filter(s) and have them copied to POE filters folder", bg="blue", fg="white", font="Helvetica 12 bold").grid(row=0, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
