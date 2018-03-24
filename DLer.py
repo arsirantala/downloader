@@ -390,8 +390,8 @@ class Application:
         self.stop_button = tk.Button(self.frame, text="Stop", command=lambda: self.stop_download_operation(self.down), state=tk.DISABLED, width=10, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black")
         self.stop_button.grid(row=7, column=0, columnspan=4, pady=5)
 
-        self.statusbar_label = tk.Label(self.frame, text="", bg="blue", fg="white")
-        self.statusbar_label.grid(row=8, column=0, columnspan=4, sticky=tk.W+tk.S, pady=5)
+        self.statusbar_label = tk.Label(self.root, text="", bg="blue", fg="white", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.statusbar_label.pack(side=tk.BOTTOM, fill=tk.X)
 
         # create a top level menu
         menubar = tk.Menu(self.root)
