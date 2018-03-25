@@ -108,6 +108,48 @@ class Utility:
         else:
             return ""
 
+    @staticmethod
+    def update_ini_file(section, key, value, add_section_if_missing=False):
+        if not add_section_if_missing:
+            if section == "" or section == None:
+                raise Exception("Section called %s value is empty or None" % section)
+
+        if key == "" or key == None:
+            raise Exception("Key called %s value is empty or None" % key)
+
+        if value == "" or value == None:
+            raise Exception("Value called %s value is empty or None" % value)
+
+        config_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
+        cfgfile = open(config_filename, "w")
+        Config.read(config_filename)
+
+        if add_section_if_missing:
+            if not Config.has_section(section):
+                Config.add_section(section)
+
+        if not Config.has_section(section):
+            raise Exception("No section called %s was found in the ini file: %s!" % (section, config_filename))
+        else:
+            Config.set(section, key, str(value))
+
+        Config.write(cfgfile)
+        cfgfile.close()
+
+    @staticmethod
+    def read_from_ini(section, key):
+        config_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
+        cfgfile = open(config_filename, "r")
+        Config.read(config_filename)
+        try:
+            value = Config.get(section, key)
+        except:
+            my_logger.error("No key '%s' were found in section: '%s' from ini file: %s" % (key, section, config_filename))
+            value = None
+        cfgfile.close()
+        return value
+
+
 class Downloader:
     def write_error(self, util, e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters):
         util.writeError("Error: " + e + " occurred during download", statusbar_label, root, stop_button,
@@ -213,7 +255,7 @@ class Downloader:
             difference = now - start_time
             if difference.total_seconds() > 0:
                 kbs = file_size_dl / difference.total_seconds()
-                if no_content_length == False:
+                if not no_content_length:
                     bytesLeft = size - file_size_dl
                     timeLeft = bytesLeft / kbs
                     estimateLeft = str(datetime.timedelta(seconds=timeLeft)).split(".")[0]
@@ -296,9 +338,30 @@ class Application:
     def __init__(self):
         self.root = tk.Tk()
 
+        self.no_transparency = tk.DoubleVar()
+        self.transparency_90_percent = tk.DoubleVar()
+        self.transparency_80_percent = tk.DoubleVar()
+        self.transparency_70_percent = tk.DoubleVar()
+
+        util = Utility()
+        value = util.read_from_ini("General", "UITransparency")
+
+        if value == "" or value == None or value == "1.0":
+            if value == "" or value == None:
+                value = "1.0"
+            self.no_transparency.set(1)
+            util.update_ini_file("General", "UITransparency", 1.0, True)
+        elif value == "0.7":
+            self.transparency_70_percent.set(1)
+        elif value == "0.8":
+            self.transparency_80_percent.set(1)
+        elif value == "0.9":
+            self.transparency_90_percent.set(1)
+
+        self.root.attributes('-alpha', value)
+
         self.root.title("Path of Exile Highwind filter Downloader")
         self.root.resizable(0, 0)
-        self.root.attributes('-alpha', 0.85)
 
         self.frame = tk.Frame(self.root, bg="blue")
         tk.Label(self.frame, text="Welcome to Downloader. Click button below to download filter(s) and have them copied to POE filters folder", bg="blue", fg="white", font="Helvetica 12 bold").grid(row=0, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
@@ -404,7 +467,26 @@ class Application:
 
         tools_menu = tk.Menu(menubar, tearoff=0)
         tools_menu.add_command(label="Open POE filter directory...", command=self.open_poe_filter_directory)
+        tools_menu.add_separator()
+        view_menu = tk.Menu(tools_menu, tearoff=0)
+        if value == "1.0":
+            view_menu.add_radiobutton(label="No transparency", variable=self.no_transparency, value=1, command=lambda: self.set_no_transparency())
+        else:
+            view_menu.add_radiobutton(label="No transparency", variable=self.no_transparency, value=0, command=lambda: self.set_no_transparency())
+        if value == "0.9":
+            view_menu.add_radiobutton(label="90%", variable=self.transparency_90_percent, value=1, command=lambda: self.set_transparency(0.90))
+        else:
+            view_menu.add_radiobutton(label="90%", variable=self.transparency_90_percent, value=0, command=lambda: self.set_transparency(0.90))
+        if value == "0.8":
+            view_menu.add_radiobutton(label="80%", variable=self.transparency_80_percent, value=1, command=lambda: self.set_transparency(0.80))
+        else:
+            view_menu.add_radiobutton(label="80%", variable=self.transparency_80_percent, value=0, command=lambda: self.set_transparency(0.80))
+        if value == "0.7":
+            view_menu.add_radiobutton(label="70%", variable=self.transparency_70_percent, value=1, command=lambda: self.set_transparency(0.70))
+        else:
+            view_menu.add_radiobutton(label="70%", variable=self.transparency_70_percent, value=0, command=lambda: self.set_transparency(0.70))
 
+        tools_menu.add_cascade(label="Window transparency", menu=view_menu)
         menubar.add_cascade(label="Tools", menu=tools_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -426,8 +508,35 @@ class Application:
         self.center(self.root)
 
         self.root.lift()
+        self.root.iconbitmap('Highwind.ico')
 
         self.root.mainloop()
+
+    def set_no_transparency(self):
+        self.root.attributes('-alpha', 1.00)
+        self.transparency_90_percent.set(0)
+        self.transparency_80_percent.set(0)
+        self.transparency_70_percent.set(0)
+
+        util = Utility()
+        util.update_ini_file("General", "UITransparency", 1.00, True)
+
+    def set_transparency(self, value):
+        self.root.attributes('-alpha', value)
+        if value == 0.7:
+            self.transparency_80_percent.set(0)
+            self.transparency_90_percent.set(0)
+        elif value == 0.8:
+            self.transparency_70_percent.set(0)
+            self.transparency_90_percent.set(0)
+        if value == 0.9:
+            self.transparency_70_percent.set(0)
+            self.transparency_80_percent.set(0)
+
+        self.no_transparency.set(0)
+
+        util = Utility()
+        util.update_ini_file("General", "UITransparency", value, True)
 
     def update_labelframes_timer_tick(self):
         self.statusbar_label.config(text="Checking for updates...")
@@ -495,9 +604,22 @@ class Application:
         config_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
         cfgfile = open(config_filename, "r")
         Config.read(config_filename)
-        old_etag = Config.get("Filter_etags", variant)
-        old_date = Config.get("Filter_dates", variant)
-        old_size = Config.get("Filter_gzip_sizes", variant)
+        old_etag = ""
+        old_date = ""
+        old_size = ""
+        filter_etags_section_was_found = False
+        filter_dates_section_was_found = False
+        filter_gzip_sizes_section_was_found = False
+
+        if Config.has_section("Filter_etags"):
+            filter_etags_section_was_found = True
+            old_etag = Config.get("Filter_etags", variant)
+        if Config.has_section("Filter_dates"):
+            filter_dates_section_was_found = True
+            old_date = Config.get("Filter_dates", variant)
+        if Config.has_section("Filter_gzip_sizes"):
+            filter_gzip_sizes_section_was_found = True
+            old_size = Config.get("Filter_gzip_sizes", variant)
         cfgfile.close()
 
         if len(old_etag) > 0 and len(old_date) > 0 and len(old_size) > 0:
@@ -513,12 +635,14 @@ class Application:
         else:
             updated_available_label.config(text="Update available: Unknown")
 
-        # config_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
         cfgfile = open(config_filename, "w")
         Config.read(config_filename)
-        Config.set("Filter_etags", variant, etag)
-        Config.set("Filter_dates", variant, str(mod_time))
-        Config.set("Filter_gzip_sizes", variant, str(length))
+        if filter_etags_section_was_found:
+            Config.set("Filter_etags", variant, etag)
+        if filter_dates_section_was_found:
+            Config.set("Filter_dates", variant, str(mod_time))
+        if filter_gzip_sizes_section_was_found:
+            Config.set("Filter_gzip_sizes", variant, str(length))
         Config.write(cfgfile)
         cfgfile.close()
 
