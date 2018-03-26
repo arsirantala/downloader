@@ -346,28 +346,6 @@ class Application:
     def __init__(self):
         self.root = tk.Tk()
 
-        self.no_transparency = tk.DoubleVar()
-        self.transparency_90_percent = tk.DoubleVar()
-        self.transparency_80_percent = tk.DoubleVar()
-        self.transparency_70_percent = tk.DoubleVar()
-
-        util = Utility()
-        value = util.read_from_ini("General", "UITransparency")
-
-        if value == "" or value == None or value == "1.0":
-            if value == "" or value == None:
-                value = "1.0"
-            self.no_transparency.set(1)
-            util.update_ini_file("General", "UITransparency", 1.0, True)
-        elif value == "0.7":
-            self.transparency_70_percent.set(1)
-        elif value == "0.8":
-            self.transparency_80_percent.set(1)
-        elif value == "0.9":
-            self.transparency_90_percent.set(1)
-
-        self.root.attributes('-alpha', value)
-
         self.root.title("Path of Exile Highwind filter Downloader")
         self.root.resizable(0, 0)
 
@@ -477,22 +455,29 @@ class Application:
         tools_menu.add_command(label="Open POE filter directory...", command=self.open_poe_filter_directory)
         tools_menu.add_separator()
         view_menu = tk.Menu(tools_menu, tearoff=0)
-        if value == "1.0":
-            view_menu.add_radiobutton(label="No transparency", variable=self.no_transparency, value=1, command=lambda: self.set_no_transparency())
-        else:
-            view_menu.add_radiobutton(label="No transparency", variable=self.no_transparency, value=0, command=lambda: self.set_no_transparency())
-        if value == "0.9":
-            view_menu.add_radiobutton(label="90%", variable=self.transparency_90_percent, value=1, command=lambda: self.set_transparency(0.90))
-        else:
-            view_menu.add_radiobutton(label="90%", variable=self.transparency_90_percent, value=0, command=lambda: self.set_transparency(0.90))
-        if value == "0.8":
-            view_menu.add_radiobutton(label="80%", variable=self.transparency_80_percent, value=1, command=lambda: self.set_transparency(0.80))
-        else:
-            view_menu.add_radiobutton(label="80%", variable=self.transparency_80_percent, value=0, command=lambda: self.set_transparency(0.80))
-        if value == "0.7":
-            view_menu.add_radiobutton(label="70%", variable=self.transparency_70_percent, value=1, command=lambda: self.set_transparency(0.70))
-        else:
-            view_menu.add_radiobutton(label="70%", variable=self.transparency_70_percent, value=0, command=lambda: self.set_transparency(0.70))
+        self.choices = ["No transparency", "90%", "80%", "70%"]
+        self.transparency = tk.IntVar()
+        index = 1
+        for l in self.choices:
+            view_menu.add_radiobutton(label=l, value=index, variable=self.transparency, command=self.set_transparency)
+            index += 1
+
+        util = Utility()
+        value = util.read_from_ini("General", "UITransparency")
+
+        if value == "" or value == None or value == "1.0":
+            if value == "" or value == None:
+                value = "1.0"
+            self.transparency.set(1)
+            util.update_ini_file("General", "UITransparency", 1.0, True)
+        elif value == "0.7":
+            self.transparency.set(4)
+        elif value == "0.8":
+            self.transparency.set(3)
+        elif value == "0.9":
+            self.transparency.set(2)
+
+        self.root.attributes('-alpha', value)
 
         tools_menu.add_cascade(label="Window transparency", menu=view_menu)
         menubar.add_cascade(label="Tools", menu=tools_menu)
@@ -516,36 +501,27 @@ class Application:
         self.center(self.root)
 
         self.root.lift()
-        # self.root.iconbitmap('Highwind.ico')
         self.root.iconbitmap(default=util.resource_path("Highwind.ico"))
 
         self.root.mainloop()
 
-    def set_no_transparency(self):
-        self.root.attributes('-alpha', 1.00)
-        self.transparency_90_percent.set(0)
-        self.transparency_80_percent.set(0)
-        self.transparency_70_percent.set(0)
-
+    def set_transparency(self):
+        value = self.transparency.get()
         util = Utility()
-        util.update_ini_file("General", "UITransparency", 1.00, True)
 
-    def set_transparency(self, value):
-        self.root.attributes('-alpha', value)
-        if value == 0.7:
-            self.transparency_80_percent.set(0)
-            self.transparency_90_percent.set(0)
-        elif value == 0.8:
-            self.transparency_70_percent.set(0)
-            self.transparency_90_percent.set(0)
-        if value == 0.9:
-            self.transparency_70_percent.set(0)
-            self.transparency_80_percent.set(0)
+        if value == 1:
+            self.root.attributes('-alpha', 1.0)
+            util.update_ini_file("General", "UITransparency", 1.0, True)
+        elif value == 2:
+            self.root.attributes('-alpha', 0.9)
+            util.update_ini_file("General", "UITransparency", 0.9, True)
+        elif value == 3:
+            self.root.attributes('-alpha', 0.8)
+            util.update_ini_file("General", "UITransparency", 0.8, True)
+        elif value == 4:
+            self.root.attributes('-alpha', 0.7)
+            util.update_ini_file("General", "UITransparency", 0.7, True)
 
-        self.no_transparency.set(0)
-
-        util = Utility()
-        util.update_ini_file("General", "UITransparency", value, True)
 
     def update_labelframes_timer_tick(self):
         self.statusbar_label.config(text="Checking for updates...")
@@ -839,6 +815,9 @@ if __name__ == "__main__":
         Config.set("Filter_gzip_sizes", "S_Mapping_Highwind", "")
         Config.set("Filter_gzip_sizes", "S_Strict_Highwind", "")
         Config.set("Filter_gzip_sizes", "S_Very_Strict_Highwind", "")
+
+        Config.add_section("General")
+        Config.set("General", "UITransparency", "1.0")
 
         try:
             Config.write(cfgfile)
