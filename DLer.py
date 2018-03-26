@@ -149,6 +149,14 @@ class Utility:
         cfgfile.close()
         return value
 
+    @staticmethod
+    def resource_path(relative_path):
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+
+        return os.path.join(base_path, relative_path)
 
 class Downloader:
     def write_error(self, util, e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters):
@@ -508,7 +516,8 @@ class Application:
         self.center(self.root)
 
         self.root.lift()
-        self.root.iconbitmap('Highwind.ico')
+        # self.root.iconbitmap('Highwind.ico')
+        self.root.iconbitmap(default=util.resource_path("Highwind.ico"))
 
         self.root.mainloop()
 
