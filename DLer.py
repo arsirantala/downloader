@@ -13,13 +13,11 @@ import ctypes.wintypes
 import datetime
 import hashlib
 import httplib
-import logging
 import logging.handlers
 import os
 import subprocess
 import sys
 import tempfile
-import threading
 import threading
 import time
 import tkMessageBox
@@ -35,7 +33,7 @@ import requests
 # Constants ->
 DLER_VERSION = "1.0.10"
 CSIDL_PERSONAL = 5       # My Documents
-SHGFP_TYPE_CURRENT= 0   # Want current, not default value
+SHGFP_TYPE_CURRENT = 0   # Want current, not default value
 highwind_repository_base_url = "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters"
 #  <- Constants
 
@@ -45,7 +43,8 @@ class Utility:
     def __init__(self):
         pass
 
-    def writeError(self, msg, statusbar_label, root, stop_button, download_highwind, download_highwind_mapper, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters):
+    @staticmethod
+    def write_error(msg, statusbar_label, root, stop_button, download_highwind, download_highwind_mapper, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters):
         statusbar_label.config(text=msg)
         stop_button.config(state="disabled")
         download_highwind.config(state="normal")
@@ -111,42 +110,42 @@ class Utility:
     @staticmethod
     def update_ini_file(section, key, value, add_section_if_missing=False):
         if not add_section_if_missing:
-            if section == "" or section == None:
+            if section == "" or section is None:
                 raise Exception("Section called %s value is empty or None" % section)
 
-        if key == "" or key == None:
+        if key == "" or key is None:
             raise Exception("Key called %s value is empty or None" % key)
 
-        if value == "" or value == None:
+        if value == "" or value is None:
             raise Exception("Value called %s value is empty or None" % value)
 
-        config_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
-        cfgfile = open(config_filename, "w")
-        Config.read(config_filename)
+        cfg_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
+        cfgfile_write = open(cfg_filename, "w")
+        Config.read(cfg_filename)
 
         if add_section_if_missing:
             if not Config.has_section(section):
                 Config.add_section(section)
 
         if not Config.has_section(section):
-            raise Exception("No section called %s was found in the ini file: %s!" % (section, config_filename))
+            raise Exception("No section called %s was found in the ini file: %s!" % (section, cfg_filename))
         else:
             Config.set(section, key, str(value))
 
-        Config.write(cfgfile)
-        cfgfile.close()
+        Config.write(cfgfile_write)
+        cfgfile_write.close()
 
     @staticmethod
     def read_from_ini(section, key):
-        config_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
-        cfgfile = open(config_filename, "r")
-        Config.read(config_filename)
+        cfg_filename_read = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
+        cfgfile_read = open(cfg_filename_read, "r")
+        Config.read(cfg_filename_read)
         try:
             value = Config.get(section, key)
         except:
-            my_logger.error("No key '%s' were found in section: '%s' from ini file: %s" % (key, section, config_filename))
+            my_logger.error("No key '%s' were found in section: '%s' from ini file: %s" % (key, section, cfg_filename_read))
             value = None
-        cfgfile.close()
+        cfgfile_read.close()
         return value
 
     @staticmethod
@@ -158,15 +157,14 @@ class Utility:
 
         return os.path.join(base_path, relative_path)
 
+
 class Downloader:
     def write_error(self, util, e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters):
-        util.writeError("Error: " + e + " occurred during download", statusbar_label, root, stop_button,
-                        download_highwind, download_highwind_mapping, download_highwind_strict,
-                        download_highwind_very_strict, check_updates, update_all_filters)
-        self._continue = False
+        util.write_error("Error: " + e + " occurred during download", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
         self.stop_down = True
 
     def __init__(self):
+        self._continue = False
         self.stop_down = False
         self.thread = None
 
@@ -190,15 +188,14 @@ class Downloader:
 
         _continue = True
         try:
-            handler = urllib2.urlopen(url, timeout=240)
+            handler_dl = urllib2.urlopen(url, timeout=240)
         except urllib2.HTTPError, e:
-            self.write_error(util, e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
-                             download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+            self.write_error(util, e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
             return
 
         no_content_length = False
-        if "content-length" in handler.headers:
-            size = long(handler.headers['content-length'])
+        if "content-length" in handler_dl.headers:
+            size = long(handler_dl.headers['content-length'])
         else:
             no_content_length = True
             my_logger.info("content-length was not found from headers! Can't show download progress")
@@ -224,24 +221,15 @@ class Downloader:
 
         while not self.stop_down and _continue:
             try:
-                data = handler.read(block_sz)
+                data = handler_dl.read(block_sz)
             except (urllib2.HTTPError, urllib2.URLError) as error:
-                self.write_error(util, "Error occurred while downloading the file: " + error,
-                                 statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
-                                 download_highwind_strict, download_highwind_very_strict, check_updates,
-                                 update_all_filters)
+                self.write_error(util, "Error occurred while downloading the file: " + error, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
                 return
             except timeout:
-                self.write_error(util, "Timeout error occurred while downloading the file",
-                                 statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
-                                 download_highwind_strict, download_highwind_very_strict, check_updates,
-                                 update_all_filters)
+                self.write_error(util, "Timeout error occurred while downloading the file", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
                 return
             except Exception, e:
-                self.write_error(util, "Exception occurred while downloading the file. Exception was:" + str(e),
-                                 statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
-                                 download_highwind_strict, download_highwind_very_strict, check_updates,
-                                 update_all_filters)
+                self.write_error(util, "Exception occurred while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
                 return
 
             file_size_dl += len(data)
@@ -264,16 +252,12 @@ class Downloader:
             if difference.total_seconds() > 0:
                 kbs = file_size_dl / difference.total_seconds()
                 if not no_content_length:
-                    bytesLeft = size - file_size_dl
-                    timeLeft = bytesLeft / kbs
-                    estimateLeft = str(datetime.timedelta(seconds=timeLeft)).split(".")[0]
-                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " \
-                                                     + p1 + " bytes of " + p2 + " [" + estimateLeft + " time left. Speed: " + \
-                                                     str(util.get_human_readable(kbs)) + "/s]")
+                    bytes_left = size - file_size_dl
+                    time_left = bytes_left / kbs
+                    estimate_left = str(datetime.timedelta(seconds=time_left)).split(".")[0]
+                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " + p1 + " bytes of " + p2 + " [" + estimate_left + " time left. Speed: " + str(util.get_human_readable(kbs)) + "/s]")
                 else:
-                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " \
-                                                     + p1 + " bytes of Unknown [??? time left. Speed: " + \
-                                                     str(util.get_human_readable(kbs)) + "/s]")
+                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " + p1 + " bytes of Unknown [??? time left. Speed: " + str(util.get_human_readable(kbs)) + "/s]")
 
             else:
                 if not no_content_length:
@@ -284,7 +268,7 @@ class Downloader:
             self.fp.write(data)
             _continue = data
 
-        handler.close()  # if download is stopped the handler should be closed
+        handler_dl.close()  # if download is stopped the handler should be closed
         self.fp.close()  # if download is stopped the file should be closed
 
         if not self.stop_down:
@@ -311,9 +295,9 @@ class Downloader:
                     else:
                         statusbar_label.config(text="The filter is the same as the older one")
                 else:
-                    util.writeError("Error: POE filter directory doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+                    util.write_error("Error: POE filter directory doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
             else:
-                util.writeError("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+                util.write_error("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
         else:
             statusbar_label.config(text="Download was stopped by user")
 
@@ -334,7 +318,8 @@ def goodbye():
 
 
 class Application:
-    def center(self, toplevel):
+    @staticmethod
+    def center(toplevel):
         toplevel.update_idletasks()
         w = toplevel.winfo_screenwidth()
         h = toplevel.winfo_screenheight()
@@ -465,8 +450,8 @@ class Application:
         util = Utility()
         value = util.read_from_ini("General", "UITransparency")
 
-        if value == "" or value == None or value == "1.0":
-            if value == "" or value == None:
+        if value == "" or value is None or value == "1.0":
+            if value == "" or value is None:
                 value = "1.0"
             self.transparency.set(1)
             util.update_ini_file("General", "UITransparency", 1.0, True)
@@ -522,7 +507,6 @@ class Application:
             self.root.attributes('-alpha', 0.7)
             util.update_ini_file("General", "UITransparency", 0.7, True)
 
-
     def update_labelframes_timer_tick(self):
         self.statusbar_label.config(text="Checking for updates...")
 
@@ -565,9 +549,10 @@ class Application:
 
         self.update_labelframes_timer_tick()
 
-    def file_is_same_in_size(self, file, length):
+    @staticmethod
+    def file_is_same_in_size(file_name, length):
         path = tempfile.gettempdir()
-        path = path + '/' + file
+        path = path + '/' + file_name
         if os.path.exists(path):
             return os.path.getsize(path) == length
         else:
@@ -581,14 +566,14 @@ class Application:
             return
 
         length = long(length)
-        size_label.config(text=self.file_size(length) + " gziped")
+        size_label.config(text=self.file_size(length) + " (gziped)")
         mod_time = util.get_last_modified_date_in_url(url)
         mod_label.config(text=self.modified_date(mod_time))
         etag = util.get_etag_in_url(url)
 
-        config_filename = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
-        cfgfile = open(config_filename, "r")
-        Config.read(config_filename)
+        config_filename_upd_labelframes = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
+        cfgfile_update_labelframes = open(config_filename_upd_labelframes, "r")
+        Config.read(config_filename_upd_labelframes)
         old_etag = ""
         old_date = ""
         old_size = ""
@@ -605,7 +590,7 @@ class Application:
         if Config.has_section("Filter_gzip_sizes"):
             filter_gzip_sizes_section_was_found = True
             old_size = Config.get("Filter_gzip_sizes", variant)
-        cfgfile.close()
+        cfgfile_update_labelframes.close()
 
         if len(old_etag) > 0 and len(old_date) > 0 and len(old_size) > 0:
             if old_etag != etag and old_date != mod_time and old_size != length:
@@ -620,18 +605,19 @@ class Application:
         else:
             updated_available_label.config(text="Update available: Unknown")
 
-        cfgfile = open(config_filename, "w")
-        Config.read(config_filename)
+        cfgfile_update_labelframes = open(config_filename_upd_labelframes, "w")
+        Config.read(config_filename_upd_labelframes)
         if filter_etags_section_was_found:
             Config.set("Filter_etags", variant, etag)
         if filter_dates_section_was_found:
             Config.set("Filter_dates", variant, str(mod_time))
         if filter_gzip_sizes_section_was_found:
             Config.set("Filter_gzip_sizes", variant, str(length))
-        Config.write(cfgfile)
-        cfgfile.close()
+        Config.write(cfgfile_update_labelframes)
+        cfgfile_update_labelframes.close()
 
-    def set_content_to_label(self, variant, label):
+    @staticmethod
+    def set_content_to_label(variant, label):
         util = Utility()
         path = util.poe_filter_directory()
         if os.path.exists(path):
@@ -711,7 +697,7 @@ class Application:
         elif msgbox_type == "warning":
             tkMessageBox.showwarning(title=title, message=message, parent=window)
         else:
-            my_logger.error("Unkown type was passed to showMsgBox method")
+            my_logger.error("Unknown type was passed to showMsgBox method")
             return
 
         self.root.update()
@@ -724,11 +710,13 @@ class Application:
         tkMessageBox.showinfo(title="About Downloader", message="Downloader V" + DLER_VERSION + "\n\nBy Ixoth\n\nCopyright (C) 2018", parent=window)
         self.root.update()
 
-    def downloader_homepage(self):
+    @staticmethod
+    def downloader_homepage():
         url = "https://github.com/arsirantala/downloader"
         os.startfile(url)
 
-    def highwind_filter_poe_forums(self):
+    @staticmethod
+    def highwind_filter_poe_forums():
         url = "https://www.pathofexile.com/forum/view-thread/1490867"
         os.startfile(url)
 
@@ -742,12 +730,11 @@ class Application:
         self.root.update()
 
         self.down = Downloader()
-        self.down.download(url, filename, self.download_highwind, self.download_highwind_mapping, self.download_highwind_strict, self.download_highwind_very_strict, self.check_updates, self.update_all_filters, self.progressbar,
-                           self.downloadstatus_Label, self.stop_button, self.statusbar_label, self.root)
+        self.down.download(url, filename, self.download_highwind, self.download_highwind_mapping, self.download_highwind_strict, self.download_highwind_very_strict, self.check_updates, self.update_all_filters, self.progressbar, self.downloadstatus_Label, self.stop_button, self.statusbar_label, self.root)
 
     def download_highwind_filter(self, variant):
         if not self.have_internet():
-            self.show_msgbox("No internet connection", "Sorry feature unanavailable because of no internet connectivity", 200, 200, "error")
+            self.show_msgbox("No internet connection", "Sorry feature unavailable because of no internet connectivity", 200, 200, "error")
             return
 
         util = Utility()
@@ -773,6 +760,7 @@ class Application:
             subprocess.call(['explorer', path])
         else:
             self.show_msgbox("Can't find POE filter directory", "The default POE filter directory doesn't exist!", 200, 200, "error")
+
 
 if __name__ == "__main__":
     # Add the log message handler to the logger
@@ -822,7 +810,7 @@ if __name__ == "__main__":
         try:
             Config.write(cfgfile)
         except:
-            my_logger.error("Error occured while trying to write file %s" % config_filename)
+            my_logger.error("Error occurred while trying to write file %s" % config_filename)
 
         cfgfile.close()
 

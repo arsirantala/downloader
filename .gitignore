@@ -4,9 +4,10 @@ dist/
 build/
 download_highwind.bat
 *.out
-*.spec
 Downloader-cache/
 EFS0.TMP
 *.ini
 Downloader/PROJECT_ASSISTANT/SINGLE_EXE_IMAGE/LogFiles/
 Downloader/PROJECT_ASSISTANT/SINGLE_EXE_IMAGE/Reports/
+DownloaderConsole.spec
+
