@@ -26,6 +26,7 @@ import urllib2
 from _socket import timeout
 from shutil import copyfile
 from sys import platform
+import re
 
 import configparser
 import requests
@@ -36,6 +37,17 @@ CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT = 0   # Want current, not default value
 highwind_repository_base_url = "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters"
 #  <- Constants
+
+
+class Filter:
+    name = ""
+    filename = ""
+    url = ""
+
+    def __init__(self, name, filename, url):
+        self.name = name
+        self.filename = filename
+        self.url = url
 
 
 class Utility:
@@ -509,6 +521,46 @@ class Application:
 
     def update_labelframes_timer_tick(self):
         self.statusbar_label.config(text="Checking for updates...")
+
+        if self.have_internet():
+            try:
+                # TODO should the download of the config file be done so that progress is shown?
+                # TODO 1. write the filters list to the ini file and use that in the program (rather than hard coded filter names and urls)
+                # TODO 2. write similarly to filter files the etag, content-length, date to the ini file, so that first
+                # the headers of the config file are fetched - if they are different than ones in ini file, then get
+                # the config file from the internet
+                # TODO 3. based on the filters list, update the urls and filter names which are later used to download and
+                # update button text content
+                txt = urllib2.urlopen("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/filterblast_config.txt", timeout=240).read()
+                regex = "\tPreset\s\"(?P<name>[\w\s]+)\"(\sDEFAULT){0,1}\s\[(?P<filename>[\w]+)\]\s\[(?P<url>[\w:/.-]+)\]"
+                matches = re.finditer(regex, txt, re.MULTILINE)
+
+                filters = []
+
+                for matchNum, match in enumerate(matches):
+                    matchNum = matchNum + 1
+
+                    name = ""
+                    filename = ""
+                    url = ""
+
+                    for groupNum in range(0, len(match.groups())):
+                        groupNum = groupNum + 1
+
+                        if groupNum == 1:
+                            name = match.group(groupNum)
+                        elif groupNum == 3:
+                            filename = match.group(groupNum)
+                        elif groupNum == 4:
+                            url = match.group(groupNum)
+
+                        if name != "" and filename != "" and url != "":
+                            filters.append(Filter(name, filename, url))
+            except urllib2.HTTPError, e:
+                my_logger.error("While downloading the config file an exception: '%s' occurred", str(e))
+        else:
+            # TODO what should be done, when no internet connection? Use default urls, names for the filters?
+            pass
 
         self.update_labelframes("S_Regular_Highwind")
         self.update_labelframes("S_Mapping_Highwind")
