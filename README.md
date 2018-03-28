@@ -1,5 +1,3 @@
-[![Github All Releases](https://img.shields.io/github/downloads/arsirantala/downloader/total.svg)]()
-
 # General
 This python script downloads from the internet Path of Exile Highwind filter files.
 
