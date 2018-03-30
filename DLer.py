@@ -4,7 +4,7 @@ date: 16.3.2018
 username: Ixoth
 description: Highwind POE filter Downloader
 TODO:
--check the file differences, and based on the outcome update the update available labels in each of the filter groups
+-
 """
 
 import Tkinter as tk
@@ -206,6 +206,7 @@ class Downloader:
             return
 
         no_content_length = False
+        size = 0
         if "content-length" in handler_dl.headers:
             size = long(handler_dl.headers['content-length'])
         else:
@@ -460,13 +461,13 @@ class Application:
             index += 1
 
         util = Utility()
-        value = util.read_from_ini("General", "UITransparency")
+        value = util.read_from_ini("General", "uitransparency")
 
         if value == "" or value is None or value == "1.0":
             if value == "" or value is None:
                 value = "1.0"
             self.transparency.set(1)
-            util.update_ini_file("General", "UITransparency", 1.0, True)
+            util.update_ini_file("General", "uitransparency", 1.0, True)
         elif value == "0.7":
             self.transparency.set(4)
         elif value == "0.8":
@@ -508,59 +509,71 @@ class Application:
 
         if value == 1:
             self.root.attributes('-alpha', 1.0)
-            util.update_ini_file("General", "UITransparency", 1.0, True)
+            util.update_ini_file("General", "uitransparency", 1.0, True)
         elif value == 2:
             self.root.attributes('-alpha', 0.9)
-            util.update_ini_file("General", "UITransparency", 0.9, True)
+            util.update_ini_file("General", "uitransparency", 0.9, True)
         elif value == 3:
             self.root.attributes('-alpha', 0.8)
-            util.update_ini_file("General", "UITransparency", 0.8, True)
+            util.update_ini_file("General", "uitransparency", 0.8, True)
         elif value == 4:
             self.root.attributes('-alpha', 0.7)
-            util.update_ini_file("General", "UITransparency", 0.7, True)
+            util.update_ini_file("General", "uitransparency", 0.7, True)
 
     def update_labelframes_timer_tick(self):
         self.statusbar_label.config(text="Checking for updates...")
 
         if self.have_internet():
-            try:
-                # TODO should the download of the config file be done so that progress is shown?
-                # TODO 1. write the filters list to the ini file and use that in the program (rather than hard coded filter names and urls)
-                # TODO 2. write similarly to filter files the etag, content-length, date to the ini file, so that first
-                # the headers of the config file are fetched - if they are different than ones in ini file, then get
-                # the config file from the internet
-                # TODO 3. based on the filters list, update the urls and filter names which are later used to download and
-                # update button text content
-                txt = urllib2.urlopen("https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/filterblast_config.txt", timeout=240).read()
-                regex = "\tPreset\s\"(?P<name>[\w\s]+)\"(\sDEFAULT){0,1}\s\[(?P<filename>[\w]+)\]\s\[(?P<url>[\w:/.-]+)\]"
-                matches = re.finditer(regex, txt, re.MULTILINE)
+            util = Utility()
+            config_etag_from_ini = util.read_from_ini("ConfigFile", "etag")
+            config_date_from_ini = util.read_from_ini("ConfigFile", "date")
+            config_size_from_ini = util.read_from_ini("ConfigFile", "gzip_size")
 
-                filters = []
+            config_url = "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/filterblast_config.txt"
 
-                for matchNum, match in enumerate(matches):
-                    matchNum = matchNum + 1
+            config_etag = util.get_etag_in_url(config_url)
+            config_size = util.get_file_size_in_url(config_url)
+            config_date = util.get_last_modified_date_in_url(config_url)
 
-                    name = ""
-                    filename = ""
-                    url = ""
+            if config_etag_from_ini != config_etag or config_date_from_ini != config_date or config_size_from_ini != config_size:
+                util.update_ini_file("ConfigFile", "etag", config_etag, True)
+                util.update_ini_file("ConfigFile", "date", config_date, True)
+                util.update_ini_file("ConfigFile", "gzip_size", config_size, True)
 
-                    for groupNum in range(0, len(match.groups())):
-                        groupNum = groupNum + 1
+                try:
+                    txt = urllib2.urlopen(config_url, timeout=240).read()
 
-                        if groupNum == 1:
-                            name = match.group(groupNum)
-                        elif groupNum == 3:
-                            filename = match.group(groupNum)
-                        elif groupNum == 4:
-                            url = match.group(groupNum)
+                    regex = "\tPreset\s\"(?P<name>[\w\s]+)\"(\sDEFAULT){0,1}\s\[(?P<filename>[\w]+)\]\s\[(?P<url>[\w:/.-]+)\]"
+                    matches = re.finditer(regex, txt, re.MULTILINE)
 
-                        if name != "" and filename != "" and url != "":
-                            filters.append(Filter(name, filename, url))
-            except urllib2.HTTPError, e:
-                my_logger.error("While downloading the config file an exception: '%s' occurred", str(e))
-        else:
-            # TODO what should be done, when no internet connection? Use default urls, names for the filters?
-            pass
+                    filters = []
+
+                    for matchNum, match in enumerate(matches):
+                        name = ""
+                        filename = ""
+                        url = ""
+
+                        for groupNum in range(0, len(match.groups())):
+                            groupNum = groupNum + 1
+
+                            if groupNum == 1:
+                                name = match.group(groupNum)
+                            elif groupNum == 3:
+                                filename = match.group(groupNum)
+                            elif groupNum == 4:
+                                url = match.group(groupNum)
+
+                            if name != "" and filename != "" and url != "":
+                                filters.append(Filter(name, filename, url))
+
+                            for f in filters:
+                                if "S_" in f.filename:
+                                    util.update_ini_file(f.filename, "name", f.name, True)
+                                    util.update_ini_file(f.filename, "url", f.url, True)
+                except urllib2.HTTPError, e:
+                    my_logger.error("While downloading the config file an exception: '%s' occurred", str(e))
+            else:
+                my_logger.info("Config file has not changed. Not going to process it again")
 
         self.update_labelframes("S_Regular_Highwind")
         self.update_labelframes("S_Mapping_Highwind")
@@ -623,50 +636,29 @@ class Application:
         mod_label.config(text=self.modified_date(mod_time))
         etag = util.get_etag_in_url(url)
 
-        config_filename_upd_labelframes = os.path.basename(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini")
-        cfgfile_update_labelframes = open(config_filename_upd_labelframes, "r")
-        Config.read(config_filename_upd_labelframes)
-        old_etag = ""
-        old_date = ""
-        old_size = ""
-        filter_etags_section_was_found = False
-        filter_dates_section_was_found = False
-        filter_gzip_sizes_section_was_found = False
+        old_etag = util.read_from_ini(variant, "etag")
+        old_date = util.read_from_ini(variant, "date")
+        old_size = util.read_from_ini(variant, "gzip_size")
 
-        if Config.has_section("Filter_etags"):
-            filter_etags_section_was_found = True
-            old_etag = Config.get("Filter_etags", variant)
-        if Config.has_section("Filter_dates"):
-            filter_dates_section_was_found = True
-            old_date = Config.get("Filter_dates", variant)
-        if Config.has_section("Filter_gzip_sizes"):
-            filter_gzip_sizes_section_was_found = True
-            old_size = Config.get("Filter_gzip_sizes", variant)
-        cfgfile_update_labelframes.close()
-
-        if len(old_etag) > 0 and len(old_date) > 0 and len(old_size) > 0:
-            if old_etag != etag and old_date != mod_time and old_size != length:
-                updated_available_label.config(text="Update available: YES")
-            else:
-                util = Utility()
-                path = util.poe_filter_directory() + "\\" + variant + ".filter"
-                if not os.path.exists(path):
+        if old_etag is not None and old_date is not None and old_size is not None:
+            if len(old_etag) > 0 and len(old_date) > 0 and len(old_size) > 0:
+                if old_etag != etag or old_date != mod_time or old_size != length:
                     updated_available_label.config(text="Update available: YES")
                 else:
-                    updated_available_label.config(text="Update available: NO")
+                    util = Utility()
+                    path = util.poe_filter_directory() + "\\" + variant + ".filter"
+                    if not os.path.exists(path):
+                        updated_available_label.config(text="Update available: YES")
+                    else:
+                        updated_available_label.config(text="Update available: NO")
+            else:
+                updated_available_label.config(text="Update available: Unknown")
         else:
             updated_available_label.config(text="Update available: Unknown")
 
-        cfgfile_update_labelframes = open(config_filename_upd_labelframes, "w")
-        Config.read(config_filename_upd_labelframes)
-        if filter_etags_section_was_found:
-            Config.set("Filter_etags", variant, etag)
-        if filter_dates_section_was_found:
-            Config.set("Filter_dates", variant, str(mod_time))
-        if filter_gzip_sizes_section_was_found:
-            Config.set("Filter_gzip_sizes", variant, str(length))
-        Config.write(cfgfile_update_labelframes)
-        cfgfile_update_labelframes.close()
+        util.update_ini_file(variant, "etag", etag, True)
+        util.update_ini_file(variant, "date", str(mod_time), True)
+        util.update_ini_file(variant, "gzip_size", str(length), True)
 
     @staticmethod
     def set_content_to_label(variant, label):
@@ -838,23 +830,6 @@ if __name__ == "__main__":
     if not os.path.exists(config_filename):
         my_logger.info("Config file %s was not found. Creating it (using default values)" % config_filename)
         cfgfile = open(config_filename, "w")
-        Config.add_section("Filter_etags")
-        Config.set("Filter_etags", "S_Regular_Highwind", "")
-        Config.set("Filter_etags", "S_Mapping_Highwind", "")
-        Config.set("Filter_etags", "S_Strict_Highwind", "")
-        Config.set("Filter_etags", "S_Very_Strict_Highwind", "")
-
-        Config.add_section("Filter_dates")
-        Config.set("Filter_dates", "S_Regular_Highwind", "")
-        Config.set("Filter_dates", "S_Mapping_Highwind", "")
-        Config.set("Filter_dates", "S_Strict_Highwind", "")
-        Config.set("Filter_dates", "S_Very_Strict_Highwind", "")
-
-        Config.add_section("Filter_gzip_sizes")
-        Config.set("Filter_gzip_sizes", "S_Regular_Highwind", "")
-        Config.set("Filter_gzip_sizes", "S_Mapping_Highwind", "")
-        Config.set("Filter_gzip_sizes", "S_Strict_Highwind", "")
-        Config.set("Filter_gzip_sizes", "S_Very_Strict_Highwind", "")
 
         Config.add_section("General")
         Config.set("General", "UITransparency", "1.0")
