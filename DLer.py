@@ -34,9 +34,12 @@ import requests
 # Constants ->
 DLER_VERSION = "1.0.10"
 CSIDL_PERSONAL = 5       # My Documents
-SHGFP_TYPE_CURRENT = 0   # Want current, not default value
-highwind_repository_base_url = "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/Filters"
+SHGFP_TYPE_CURRENT = 0
 #  <- Constants
+
+# Globals ->
+filters = []
+# <- Globals
 
 
 class Filter:
@@ -535,7 +538,7 @@ class Application:
             config_size = util.get_file_size_in_url(config_url)
             config_date = util.get_last_modified_date_in_url(config_url)
 
-            if config_etag_from_ini != config_etag or config_date_from_ini != config_date or config_size_from_ini != config_size:
+            if config_etag_from_ini != config_etag and config_date_from_ini != config_date and config_size_from_ini != config_size:
                 util.update_ini_file("ConfigFile", "etag", config_etag, True)
                 util.update_ini_file("ConfigFile", "date", config_date, True)
                 util.update_ini_file("ConfigFile", "gzip_size", config_size, True)
@@ -545,8 +548,6 @@ class Application:
 
                     regex = "\tPreset\s\"(?P<name>[\w\s]+)\"(\sDEFAULT){0,1}\s\[(?P<filename>[\w]+)\]\s\[(?P<url>[\w:/.-]+)\]"
                     matches = re.finditer(regex, txt, re.MULTILINE)
-
-                    filters = []
 
                     for matchNum, match in enumerate(matches):
                         name = ""
@@ -568,6 +569,7 @@ class Application:
 
                             for f in filters:
                                 if "S_" in f.filename:
+                                    # Utility will only handle small font filter files
                                     util.update_ini_file(f.filename, "name", f.name, True)
                                     util.update_ini_file(f.filename, "url", f.url, True)
                 except urllib2.HTTPError, e:
@@ -642,7 +644,7 @@ class Application:
 
         if old_etag is not None and old_date is not None and old_size is not None:
             if len(old_etag) > 0 and len(old_date) > 0 and len(old_size) > 0:
-                if old_etag != etag or old_date != mod_time or old_size != length:
+                if old_etag != etag and old_date != mod_time and old_size != length:
                     updated_available_label.config(text="Update available: YES")
                 else:
                     util = Utility()
@@ -673,13 +675,13 @@ class Application:
     def update_labelframes(self, variant):
         if self.have_internet():
             if variant == "S_Regular_Highwind":
-                self.set_content_to_labelframes_labels("S_Regular_Highwind", highwind_repository_base_url + "/S_Regular_Highwind.filter", self.highwind_size_label, self.highwind_last_mod_label, self.highwind_update_available_label)
+                self.set_content_to_labelframes_labels("S_Regular_Highwind", Utility.read_from_ini("S_Regular_Highwind", "url"), self.highwind_size_label, self.highwind_last_mod_label, self.highwind_update_available_label)
             elif variant == "S_Mapping_Highwind":
-                self.set_content_to_labelframes_labels("S_Mapping_Highwind", highwind_repository_base_url + "/S_Mapping_Highwind.filter", self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label, self.highwind_mapping_update_available_label)
+                self.set_content_to_labelframes_labels("S_Mapping_Highwind", Utility.read_from_ini("S_Mapping_Highwind", "url"), self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label, self.highwind_mapping_update_available_label)
             elif variant == "S_Strict_Highwind":
-                self.set_content_to_labelframes_labels("S_Strict_Highwind", highwind_repository_base_url + "/S_Strict_Highwind.filter", self.highwind_strict_size_label, self.highwind_strict_last_mod_label, self.highwind_strict_update_available_label)
+                self.set_content_to_labelframes_labels("S_Strict_Highwind", Utility.read_from_ini("S_Strict_Highwind", "url"), self.highwind_strict_size_label, self.highwind_strict_last_mod_label, self.highwind_strict_update_available_label)
             elif variant == "S_Very_Strict_Highwind":
-                self.set_content_to_labelframes_labels("S_Very_Strict_Highwind", highwind_repository_base_url + "/S_Very_Strict_Highwind.filter", self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label, self.highwind_very_strict_update_available_label)
+                self.set_content_to_labelframes_labels("S_Very_Strict_Highwind", Utility.read_from_ini("S_Very_Strict_Highwind", "url"), self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label, self.highwind_very_strict_update_available_label)
             else:
                 my_logger.error("update_labelframes method. Unknown variant: " + variant)
 
@@ -787,13 +789,13 @@ class Application:
             return
 
         if variant == "S_Regular_Highwind":
-            self.prep_dl_thread(highwind_repository_base_url + "/S_Regular_Highwind.filter", "S_Regular_Highwind.filter")
+            self.prep_dl_thread(Utility.read_from_ini("S_Regular_Highwind", "url"), "S_Regular_Highwind.filter")
         elif variant == "S_Mapping_Highwind":
-            self.prep_dl_thread(highwind_repository_base_url + "/S_Mapping_Highwind.filter", "S_Mapping_Highwind.filter")
+            self.prep_dl_thread(Utility.read_from_ini("S_Mapping_Highwind", "url"), "S_Mapping_Highwind.filter")
         elif variant == "S_Strict_Highwind":
-            self.prep_dl_thread(highwind_repository_base_url + "/S_Strict_Highwind.filter", "S_Strict_Highwind.filter")
+            self.prep_dl_thread(Utility.read_from_ini("S_Strict_Highwind", "url"), "S_Strict_Highwind.filter")
         elif variant == "S_Very_Strict_Highwind":
-            self.prep_dl_thread(highwind_repository_base_url + "/S_Very_Strict_Highwind.filter", "S_Very_Strict_Highwind.filter")
+            self.prep_dl_thread(Utility.read_from_ini("S_Very_Strict_Highwind", "url"), "S_Very_Strict_Highwind.filter")
         else:
             my_logger.error("download_highwind_filter. Unknown variant: " + variant)
 
