@@ -172,10 +172,60 @@ class Utility:
 
         return os.path.join(base_path, relative_path)
 
+    @staticmethod
+    def file_is_same_in_size(file_name, length):
+        path = tempfile.gettempdir()
+        path = path + '/' + file_name
+        if os.path.exists(path):
+            return os.path.getsize(path) == length
+        else:
+            return False
+
+    @staticmethod
+    def show_ask_question(title, message):
+        var = tkMessageBox.askyesno(title, message)
+        return var
+
+    # From http://stackoverflow.com/questions/3764291/checking-network-connection
+    @staticmethod
+    def have_internet():
+        conn = httplib.HTTPConnection("www.google.com")
+        try:
+            conn.request("HEAD", "/")
+            return True
+        except:
+            return False
+
+    @staticmethod
+    def file_size(bytes_amount):
+        retstr = "Size: "
+        if bytes_amount == 0:
+            return retstr + "Unknown"
+        else:
+            return retstr + Utility.get_human_readable(bytes_amount)
+
+    @staticmethod
+    def modified_date(last_modified):
+        retstr = "Last modified: "
+        if len(last_modified) == 0:
+            return retstr + "Unknown"
+        else:
+            return retstr + last_modified
+
+    @staticmethod
+    def downloader_homepage():
+        url = "https://github.com/arsirantala/downloader"
+        os.startfile(url)
+
+    @staticmethod
+    def highwind_filter_poe_forums():
+        url = "https://www.pathofexile.com/forum/view-thread/1490867"
+        os.startfile(url)
+
 
 class Downloader:
-    def write_error(self, util, e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters):
-        util.write_error("Error: " + e + " occurred during download", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+    def write_error(self, e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters):
+        Utility.write_error("Error: " + e + " occurred during download", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
         self.stop_down = True
 
     def __init__(self):
@@ -190,8 +240,6 @@ class Downloader:
 
     def __down(self, url, dest, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters, progressbar, downloadstatus_label, stop_button, statusbar_label, root):
 
-        util = Utility()
-
         my_logger.info("Starting downloading...")
 
         download_highwind.config(state="disabled")
@@ -205,7 +253,7 @@ class Downloader:
         try:
             handler_dl = urllib2.urlopen(url, timeout=240)
         except urllib2.HTTPError, e:
-            self.write_error(util, e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+            self.write_error(e, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
             return
 
         no_content_length = False
@@ -219,14 +267,12 @@ class Downloader:
         temp_dir = tempfile.gettempdir()
         file_path = temp_dir + '/' + dest
 
-        util = Utility()
-
         statusbar_label.config(text="Downloading to: " + file_path + "...")
 
         try:
             self.fp = open(file_path, "wb+")
         except:
-            self.write_error(util, "Was not able to open temporary file for writing the filter file at " + file_path, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
+            self.write_error("Was not able to open temporary file for writing the filter file at " + file_path, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping,
                              download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
             return
 
@@ -239,13 +285,13 @@ class Downloader:
             try:
                 data = handler_dl.read(block_sz)
             except (urllib2.HTTPError, urllib2.URLError) as error:
-                self.write_error(util, "Error occurred while downloading the file: " + error, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+                self.write_error("Error occurred while downloading the file: " + error, statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
                 return
             except timeout:
-                self.write_error(util, "Timeout error occurred while downloading the file", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+                self.write_error("Timeout error occurred while downloading the file", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
                 return
             except Exception, e:
-                self.write_error(util, "Exception occurred while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+                self.write_error("Exception occurred while downloading the file. Exception was:" + str(e), statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
                 return
 
             file_size_dl += len(data)
@@ -257,9 +303,9 @@ class Downloader:
 
             progressbar["value"] = percent
 
-            p1 = util.get_human_readable(file_size_dl)
+            p1 = Utility.get_human_readable(file_size_dl)
             if not no_content_length:
-                p2 = util.get_human_readable(size)
+                p2 = Utility.get_human_readable(size)
             else:
                 p2 = "Unknown"
 
@@ -271,9 +317,9 @@ class Downloader:
                     bytes_left = size - file_size_dl
                     time_left = bytes_left / kbs
                     estimate_left = str(datetime.timedelta(seconds=time_left)).split(".")[0]
-                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " + p1 + " bytes of " + p2 + " [" + estimate_left + " time left. Speed: " + str(util.get_human_readable(kbs)) + "/s]")
+                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " + p1 + " bytes of " + p2 + " [" + estimate_left + " time left. Speed: " + str(Utility.get_human_readable(kbs)) + "/s]")
                 else:
-                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " + p1 + " bytes of Unknown [??? time left. Speed: " + str(util.get_human_readable(kbs)) + "/s]")
+                    downloadstatus_label.config(text=str("{0:.2f}".format(percent)) + "% Downloaded " + p1 + " bytes of Unknown [??? time left. Speed: " + str(Utility.get_human_readable(kbs)) + "/s]")
 
             else:
                 if not no_content_length:
@@ -292,13 +338,13 @@ class Downloader:
             stop_button.config(state="disabled")
 
             if os.path.exists(file_path):
-                dled_file_sha1_value = util.calculate_sha1(file_path)
-                path = util.poe_filter_directory()
+                dled_file_sha1_value = Utility.calculate_sha1(file_path)
+                path = Utility.poe_filter_directory()
                 if os.path.exists(path):
                     installed_file_path = path + "\\" + dest
                     installed_file_sha1_value = None
                     if os.path.exists(installed_file_path):
-                        installed_file_sha1_value = util.calculate_sha1(installed_file_path)
+                        installed_file_sha1_value = Utility.calculate_sha1(installed_file_path)
 
                     if dled_file_sha1_value != installed_file_sha1_value:
                         try:
@@ -311,9 +357,9 @@ class Downloader:
                     else:
                         statusbar_label.config(text="The filter is the same as the older one")
                 else:
-                    util.write_error("Error: POE filter directory doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+                    Utility.write_error("Error: POE filter directory doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
             else:
-                util.write_error("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+                Utility.write_error("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
         else:
             statusbar_label.config(text="Download was stopped by user")
 
@@ -463,14 +509,13 @@ class Application:
             view_menu.add_radiobutton(label=l, value=index, variable=self.transparency, command=self.set_transparency)
             index += 1
 
-        util = Utility()
-        value = util.read_from_ini("General", "uitransparency")
+        value = Utility.read_from_ini("General", "uitransparency")
 
         if value == "" or value is None or value == "1.0":
             if value == "" or value is None:
                 value = "1.0"
             self.transparency.set(1)
-            util.update_ini_file("General", "uitransparency", 1.0, True)
+            Utility.update_ini_file("General", "uitransparency", 1.0, True)
         elif value == "0.7":
             self.transparency.set(4)
         elif value == "0.8":
@@ -484,8 +529,8 @@ class Application:
         menubar.add_cascade(label="Tools", menu=tools_menu)
 
         help_menu = tk.Menu(menubar, tearoff=0)
-        help_menu.add_command(label="Show Downloader's home page at github", command=lambda: self.downloader_homepage())
-        help_menu.add_command(label="Show Highwind filter thread at Path of Exile's forums", command=lambda: self.highwind_filter_poe_forums())
+        help_menu.add_command(label="Show Downloader's home page at github", command=lambda: Utility.downloader_homepage())
+        help_menu.add_command(label="Show Highwind filter thread at Path of Exile's forums", command=lambda: Utility.highwind_filter_poe_forums())
         help_menu.add_separator()
         help_menu.add_command(label="About Downloader", command=lambda: self.about_downloader())
         menubar.add_cascade(label="Help", menu=help_menu)
@@ -502,46 +547,44 @@ class Application:
         self.center(self.root)
 
         self.root.lift()
-        self.root.iconbitmap(default=util.resource_path("Highwind.ico"))
+        self.root.iconbitmap(default=Utility.resource_path("Highwind.ico"))
 
         self.root.mainloop()
 
     def set_transparency(self):
         value = self.transparency.get()
-        util = Utility()
 
         if value == 1:
             self.root.attributes('-alpha', 1.0)
-            util.update_ini_file("General", "uitransparency", 1.0, True)
+            Utility.update_ini_file("General", "uitransparency", 1.0, True)
         elif value == 2:
             self.root.attributes('-alpha', 0.9)
-            util.update_ini_file("General", "uitransparency", 0.9, True)
+            Utility.update_ini_file("General", "uitransparency", 0.9, True)
         elif value == 3:
             self.root.attributes('-alpha', 0.8)
-            util.update_ini_file("General", "uitransparency", 0.8, True)
+            Utility.update_ini_file("General", "uitransparency", 0.8, True)
         elif value == 4:
             self.root.attributes('-alpha', 0.7)
-            util.update_ini_file("General", "uitransparency", 0.7, True)
+            Utility.update_ini_file("General", "uitransparency", 0.7, True)
 
     def update_labelframes_timer_tick(self):
         self.statusbar_label.config(text="Checking for updates...")
 
-        if self.have_internet():
-            util = Utility()
-            config_etag_from_ini = util.read_from_ini("ConfigFile", "etag")
-            config_date_from_ini = util.read_from_ini("ConfigFile", "date")
-            config_size_from_ini = util.read_from_ini("ConfigFile", "gzip_size")
+        if Utility.have_internet():
+            config_etag_from_ini = Utility.read_from_ini("ConfigFile", "etag")
+            config_date_from_ini = Utility.read_from_ini("ConfigFile", "date")
+            config_size_from_ini = Utility.read_from_ini("ConfigFile", "gzip_size")
 
             config_url = "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/filterblast_config.txt"
 
-            config_etag = util.get_etag_in_url(config_url)
-            config_size = util.get_file_size_in_url(config_url)
-            config_date = util.get_last_modified_date_in_url(config_url)
+            config_etag = Utility.get_etag_in_url(config_url)
+            config_size = Utility.get_file_size_in_url(config_url)
+            config_date = Utility.get_last_modified_date_in_url(config_url)
 
             if config_etag_from_ini != config_etag and config_date_from_ini != config_date and config_size_from_ini != config_size:
-                util.update_ini_file("ConfigFile", "etag", config_etag, True)
-                util.update_ini_file("ConfigFile", "date", config_date, True)
-                util.update_ini_file("ConfigFile", "gzip_size", config_size, True)
+                Utility.update_ini_file("ConfigFile", "etag", config_etag, True)
+                Utility.update_ini_file("ConfigFile", "date", config_date, True)
+                Utility.update_ini_file("ConfigFile", "gzip_size", config_size, True)
 
                 try:
                     txt = urllib2.urlopen(config_url, timeout=240).read()
@@ -570,8 +613,8 @@ class Application:
                             for f in filters:
                                 if "S_" in f.filename:
                                     # Utility will only handle small font filter files
-                                    util.update_ini_file(f.filename, "name", f.name, True)
-                                    util.update_ini_file(f.filename, "url", f.url, True)
+                                    Utility.update_ini_file(f.filename, "name", f.name, True)
+                                    Utility.update_ini_file(f.filename, "url", f.url, True)
                 except urllib2.HTTPError, e:
                     my_logger.error("While downloading the config file an exception: '%s' occurred", str(e))
             else:
@@ -617,38 +660,28 @@ class Application:
         self.update_labelframes_timer_tick()
 
     @staticmethod
-    def file_is_same_in_size(file_name, length):
-        path = tempfile.gettempdir()
-        path = path + '/' + file_name
-        if os.path.exists(path):
-            return os.path.getsize(path) == length
-        else:
-            return False
-
-    def set_content_to_labelframes_labels(self, variant, url, size_label, mod_label, updated_available_label):
-        util = Utility()
-        length = util.get_file_size_in_url(url)
+    def set_content_to_labelframes_labels(variant, url, size_label, mod_label, updated_available_label):
+        length = Utility.get_file_size_in_url(url)
 
         if length == "Unknown":
             return
 
         length = long(length)
-        size_label.config(text=self.file_size(length) + " (gziped)")
-        mod_time = util.get_last_modified_date_in_url(url)
-        mod_label.config(text=self.modified_date(mod_time))
-        etag = util.get_etag_in_url(url)
+        size_label.config(text=Utility.file_size(length) + " (gziped)")
+        mod_time = Utility.get_last_modified_date_in_url(url)
+        mod_label.config(text=Utility.modified_date(mod_time))
+        etag = Utility.get_etag_in_url(url)
 
-        old_etag = util.read_from_ini(variant, "etag")
-        old_date = util.read_from_ini(variant, "date")
-        old_size = util.read_from_ini(variant, "gzip_size")
+        old_etag = Utility.read_from_ini(variant, "etag")
+        old_date = Utility.read_from_ini(variant, "date")
+        old_size = Utility.read_from_ini(variant, "gzip_size")
 
         if old_etag is not None and old_date is not None and old_size is not None:
             if len(old_etag) > 0 and len(old_date) > 0 and len(old_size) > 0:
                 if old_etag != etag and old_date != mod_time and old_size != length:
                     updated_available_label.config(text="Update available: YES")
                 else:
-                    util = Utility()
-                    path = util.poe_filter_directory() + "\\" + variant + ".filter"
+                    path = Utility.poe_filter_directory() + "\\" + variant + ".filter"
                     if not os.path.exists(path):
                         updated_available_label.config(text="Update available: YES")
                     else:
@@ -658,22 +691,21 @@ class Application:
         else:
             updated_available_label.config(text="Update available: Unknown")
 
-        util.update_ini_file(variant, "etag", etag, True)
-        util.update_ini_file(variant, "date", str(mod_time), True)
-        util.update_ini_file(variant, "gzip_size", str(length), True)
+        Utility.update_ini_file(variant, "etag", etag, True)
+        Utility.update_ini_file(variant, "date", str(mod_time), True)
+        Utility.update_ini_file(variant, "gzip_size", str(length), True)
 
     @staticmethod
     def set_content_to_label(variant, label):
-        util = Utility()
-        path = util.poe_filter_directory()
+        path = Utility.poe_filter_directory()
         if os.path.exists(path):
-            mod_time = util.get_last_modified_date_in_file(path)
+            mod_time = Utility.get_last_modified_date_in_file(path)
             label.config(text="Your " + variant + " filter file last modified time: %s" % time.ctime(mod_time))
         else:
             label.config(text="Your " + variant + " filter file is not found")
 
     def update_labelframes(self, variant):
-        if self.have_internet():
+        if Utility.have_internet():
             if variant == "S_Regular_Highwind":
                 self.set_content_to_labelframes_labels("S_Regular_Highwind", Utility.read_from_ini("S_Regular_Highwind", "url"), self.highwind_size_label, self.highwind_last_mod_label, self.highwind_update_available_label)
             elif variant == "S_Mapping_Highwind":
@@ -690,33 +722,6 @@ class Application:
         self.set_content_to_label("S_Mapping_Highwind", self.highwind_mapping_last_modified_label)
         self.set_content_to_label("S_Strict_Highwind", self.highwind_strict_last_modified_label)
         self.set_content_to_label("S_Very_Strict_Highwind", self.highwind_very_strict_last_modified_label)
-
-    # From http://stackoverflow.com/questions/3764291/checking-network-connection
-    @staticmethod
-    def have_internet():
-        conn = httplib.HTTPConnection("www.google.com")
-        try:
-            conn.request("HEAD", "/")
-            return True
-        except:
-            return False
-
-    @staticmethod
-    def file_size(bytes_amount):
-        util = Utility()
-        retstr = "Size: "
-        if bytes_amount == 0:
-            return retstr + "Unknown"
-        else:
-            return retstr + util.get_human_readable(bytes_amount)
-
-    @staticmethod
-    def modified_date(last_modified):
-        retstr = "Last modified: "
-        if len(last_modified) == 0:
-            return retstr + "Unknown"
-        else:
-            return retstr + last_modified
 
     def stop_download_operation(self, down):
         self.statusbar_label.config(text="Stopping download")
@@ -756,21 +761,6 @@ class Application:
         tkMessageBox.showinfo(title="About Downloader", message="Downloader V" + DLER_VERSION + "\n\nBy Ixoth\n\nCopyright (C) 2018", parent=window)
         self.root.update()
 
-    @staticmethod
-    def downloader_homepage():
-        url = "https://github.com/arsirantala/downloader"
-        os.startfile(url)
-
-    @staticmethod
-    def highwind_filter_poe_forums():
-        url = "https://www.pathofexile.com/forum/view-thread/1490867"
-        os.startfile(url)
-
-    @staticmethod
-    def show_ask_question(title, message):
-        var = tkMessageBox.askyesno(title, message)
-        return var
-
     def prep_dl_thread(self, url, filename):
         self.stop_button.config(state="normal")
         self.root.update()
@@ -779,12 +769,11 @@ class Application:
         self.down.download(url, filename, self.download_highwind, self.download_highwind_mapping, self.download_highwind_strict, self.download_highwind_very_strict, self.check_updates, self.update_all_filters, self.progressbar, self.downloadstatus_Label, self.stop_button, self.statusbar_label, self.root)
 
     def download_highwind_filter(self, variant):
-        if not self.have_internet():
+        if not Utility.have_internet():
             self.show_msgbox("No internet connection", "Sorry feature unavailable because of no internet connectivity", 200, 200, "error")
             return
 
-        util = Utility()
-        if not os.path.exists(util.poe_filter_directory()):
+        if not os.path.exists(Utility.poe_filter_directory()):
             self.show_msgbox("POE filter directory doesn't exist!", "Make sure the \"Path of Exile\" directory exists in \"My Documents\"\\\"My Games\"!", 200, 200, "error")
             return
 
@@ -800,8 +789,7 @@ class Application:
             my_logger.error("download_highwind_filter. Unknown variant: " + variant)
 
     def open_poe_filter_directory(self):
-        util = Utility()
-        path = util.poe_filter_directory()
+        path = Utility.poe_filter_directory()
         if os.path.exists(path):
             subprocess.call(['explorer', path])
         else:
