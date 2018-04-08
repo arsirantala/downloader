@@ -747,7 +747,7 @@ class Application:
 
     @staticmethod
     def set_content_to_label(variant, label):
-        path = Utility.poe_filter_directory()
+        path = Utility.poe_filter_directory() + "\\" +  variant + ".filter"
         if os.path.exists(path):
             mod_time = Utility.get_last_modified_date_in_file(path)
             label.config(text="Your " + variant + " filter file last modified time: %s" % time.ctime(mod_time))
