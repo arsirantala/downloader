@@ -15,6 +15,7 @@ import hashlib
 import httplib
 import logging.handlers
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -26,7 +27,6 @@ import urllib2
 from _socket import timeout
 from shutil import copyfile
 from sys import platform
-import re
 
 import configparser
 import requests
@@ -35,6 +35,10 @@ import requests
 DLER_VERSION = "1.0.10"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT = 0
+SMALL_REGULAR_FILTER = "S1_Regular_Highwind"
+SMALL_MAPPING_FILTER = "S2_Mapping_Highwind"
+SMALL_STRICT_FILTER = "S3_Strict_Highwind"
+SMALL_VERY_STRICT_FILTER = "S4_Very_Strict_Highwind"
 #  <- Constants
 
 # Globals ->
@@ -405,13 +409,13 @@ class Application:
         self.downloadstatus_Label = tk.Label(self.frame, text="", bg="blue", fg="white")
         self.downloadstatus_Label.grid(row=2, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
-        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter("S_Regular_Highwind"), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
+        self.download_highwind = tk.Button(self.frame, text="Highwind filter", command=lambda: self.download_highwind_filter(SMALL_REGULAR_FILTER), state=tk.DISABLED, width=15, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.download_highwind.grid(row=3, column=0, pady=15)
-        self.download_highwind_mapping = tk.Button(self.frame, text="Highwind mapping filter", command=lambda: self.download_highwind_filter("S_Mapping_Highwind"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
+        self.download_highwind_mapping = tk.Button(self.frame, text="Highwind mapping filter", command=lambda: self.download_highwind_filter(SMALL_MAPPING_FILTER), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.download_highwind_mapping.grid(row=3, column=1, pady=15)
-        self.download_highwind_strict = tk.Button(self.frame, text="Highwind strict filter", command=lambda: self.download_highwind_filter("S_Strict_Highwind"), state=tk.DISABLED, width=17, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
+        self.download_highwind_strict = tk.Button(self.frame, text="Highwind strict filter", command=lambda: self.download_highwind_filter(SMALL_STRICT_FILTER), state=tk.DISABLED, width=17, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.download_highwind_strict.grid(row=3, column=2, pady=15)
-        self.download_highwind_very_strict = tk.Button(self.frame, text="Highwind very strict filter", command=lambda: self.download_highwind_filter("S_Very_Strict_Highwind"), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
+        self.download_highwind_very_strict = tk.Button(self.frame, text="Highwind very strict filter", command=lambda: self.download_highwind_filter(SMALL_VERY_STRICT_FILTER), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.download_highwind_very_strict.grid(row=3, column=3, pady=15)
 
         highwind_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
@@ -509,6 +513,18 @@ class Application:
             view_menu.add_radiobutton(label=l, value=index, variable=self.transparency, command=self.set_transparency)
             index += 1
 
+        background_menu = tk.Menu(tools_menu, tearoff=0)
+        self.choices = ["Blue", "Red", "Green", "Black"]
+        self.background_color = tk.IntVar()
+        index = 1
+        for l in self.choices:
+            background_menu.add_radiobutton(label=l, value=index, variable=self.background_color, command=self.set_background_color)
+            index += 1
+
+        tools_menu.add_cascade(label="Background color", menu=background_menu)
+
+        # TODO add read from ini file operation related to background color
+
         value = Utility.read_from_ini("General", "uitransparency")
 
         if value == "" or value is None or value == "1.0":
@@ -567,6 +583,40 @@ class Application:
             self.root.attributes('-alpha', 0.7)
             Utility.update_ini_file("General", "uitransparency", 0.7, True)
 
+    def change_color_in_frame(self, color):
+        for wid in self.frame.winfo_children():
+            if wid.widgetName != "ttk::progressbar" and wid.widgetName != "ttk::labelframe":
+                wid.configure(bg=color)
+            else:
+                if wid.widgetName == "ttk:labelframe":
+                    wid.configure(background=color)
+                elif wid.widgetName == "ttk:progressbar":
+                    try:
+                        wid.configure(background=color)
+                    except e:
+                        print e
+                else:
+                    pass
+
+    def set_background_color(self):
+        self.show_msgbox("Unfinished", "This feature will be completed later on")
+        return
+
+        value = self.background_color.get()
+
+        if value == 1:
+            self.change_color_in_frame("blue")
+            Utility.update_ini_file("General", "background_color", "blue", True)
+        elif value == 2:
+            self.change_color_in_frame("red")
+            Utility.update_ini_file("General", "background_color", "red", True)
+        elif value == 3:
+            self.change_color_in_frame("green")
+            Utility.update_ini_file("General", "background_color", "green", True)
+        elif value == 4:
+            self.change_color_in_frame("black")
+            Utility.update_ini_file("General", "background_color", "black", True)
+
     def update_labelframes_timer_tick(self):
         self.statusbar_label.config(text="Checking for updates...")
 
@@ -611,8 +661,8 @@ class Application:
                                 filters.append(Filter(name, filename, url))
 
                             for f in filters:
-                                if "S_" in f.filename:
-                                    # Utility will only handle small font filter files
+                                if "S1_" in f.filename or "S2_" in f.filename or "S3_" in f.filename or "S4_" in f.filename:
+                                    # Utility will only handle small font filter files - support for large versions will be added at some point
                                     Utility.update_ini_file(f.filename, "name", f.name, True)
                                     Utility.update_ini_file(f.filename, "url", f.url, True)
                 except urllib2.HTTPError, e:
@@ -620,10 +670,10 @@ class Application:
             else:
                 my_logger.info("Config file has not changed. Not going to process it again")
 
-        self.update_labelframes("S_Regular_Highwind")
-        self.update_labelframes("S_Mapping_Highwind")
-        self.update_labelframes("S_Strict_Highwind")
-        self.update_labelframes("S_Very_Strict_Highwind")
+        self.update_labelframes(SMALL_REGULAR_FILTER)
+        self.update_labelframes(SMALL_MAPPING_FILTER)
+        self.update_labelframes(SMALL_STRICT_FILTER)
+        self.update_labelframes(SMALL_VERY_STRICT_FILTER)
 
         self.download_highwind.config(state="normal")
         self.download_highwind_mapping.config(state="normal")
@@ -637,13 +687,13 @@ class Application:
     def update_all_filters_files(self):
         self.update_all_filters.config(state="disabled")
 
-        self.download_highwind_filter("S_Regular_Highwind")
+        self.download_highwind_filter(SMALL_REGULAR_FILTER)
         self.root.update()
-        self.download_highwind_filter("S_Mapping_Highwind")
+        self.download_highwind_filter(SMALL_MAPPING_FILTER)
         self.root.update()
-        self.download_highwind_filter("S_Strict_Highwind")
+        self.download_highwind_filter(SMALL_STRICT_FILTER)
         self.root.update()
-        self.download_highwind_filter("S_Very_Strict_Highwind")
+        self.download_highwind_filter(SMALL_VERY_STRICT_FILTER)
         self.root.update()
 
         self.update_all_filters.config(state="normal")
@@ -706,22 +756,22 @@ class Application:
 
     def update_labelframes(self, variant):
         if Utility.have_internet():
-            if variant == "S_Regular_Highwind":
-                self.set_content_to_labelframes_labels("S_Regular_Highwind", Utility.read_from_ini("S_Regular_Highwind", "url"), self.highwind_size_label, self.highwind_last_mod_label, self.highwind_update_available_label)
-            elif variant == "S_Mapping_Highwind":
-                self.set_content_to_labelframes_labels("S_Mapping_Highwind", Utility.read_from_ini("S_Mapping_Highwind", "url"), self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label, self.highwind_mapping_update_available_label)
-            elif variant == "S_Strict_Highwind":
-                self.set_content_to_labelframes_labels("S_Strict_Highwind", Utility.read_from_ini("S_Strict_Highwind", "url"), self.highwind_strict_size_label, self.highwind_strict_last_mod_label, self.highwind_strict_update_available_label)
-            elif variant == "S_Very_Strict_Highwind":
-                self.set_content_to_labelframes_labels("S_Very_Strict_Highwind", Utility.read_from_ini("S_Very_Strict_Highwind", "url"), self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label, self.highwind_very_strict_update_available_label)
+            if variant == SMALL_REGULAR_FILTER:
+                self.set_content_to_labelframes_labels(SMALL_REGULAR_FILTER, Utility.read_from_ini(SMALL_REGULAR_FILTER, "url"), self.highwind_size_label, self.highwind_last_mod_label, self.highwind_update_available_label)
+            elif variant == SMALL_MAPPING_FILTER:
+                self.set_content_to_labelframes_labels(SMALL_MAPPING_FILTER, Utility.read_from_ini(SMALL_MAPPING_FILTER, "url"), self.highwind_mapping_size_label, self.highwind_mapping_last_mod_label, self.highwind_mapping_update_available_label)
+            elif variant == SMALL_STRICT_FILTER:
+                self.set_content_to_labelframes_labels(SMALL_STRICT_FILTER, Utility.read_from_ini(SMALL_STRICT_FILTER, "url"), self.highwind_strict_size_label, self.highwind_strict_last_mod_label, self.highwind_strict_update_available_label)
+            elif variant == SMALL_VERY_STRICT_FILTER:
+                self.set_content_to_labelframes_labels(SMALL_VERY_STRICT_FILTER, Utility.read_from_ini(SMALL_VERY_STRICT_FILTER, "url"), self.highwind_very_strict_size_label, self.highwind_very_strict_last_mod_label, self.highwind_very_strict_update_available_label)
             else:
                 my_logger.error("update_labelframes method. Unknown variant: " + variant)
 
     def update_labels(self):
-        self.set_content_to_label("S_Regular_Highwind", self.highwind_last_modified_label)
-        self.set_content_to_label("S_Mapping_Highwind", self.highwind_mapping_last_modified_label)
-        self.set_content_to_label("S_Strict_Highwind", self.highwind_strict_last_modified_label)
-        self.set_content_to_label("S_Very_Strict_Highwind", self.highwind_very_strict_last_modified_label)
+        self.set_content_to_label(SMALL_REGULAR_FILTER, self.highwind_last_modified_label)
+        self.set_content_to_label(SMALL_MAPPING_FILTER, self.highwind_mapping_last_modified_label)
+        self.set_content_to_label(SMALL_STRICT_FILTER, self.highwind_strict_last_modified_label)
+        self.set_content_to_label(SMALL_VERY_STRICT_FILTER, self.highwind_very_strict_last_modified_label)
 
     def stop_download_operation(self, down):
         self.statusbar_label.config(text="Stopping download")
@@ -777,14 +827,14 @@ class Application:
             self.show_msgbox("POE filter directory doesn't exist!", "Make sure the \"Path of Exile\" directory exists in \"My Documents\"\\\"My Games\"!", 200, 200, "error")
             return
 
-        if variant == "S_Regular_Highwind":
-            self.prep_dl_thread(Utility.read_from_ini("S_Regular_Highwind", "url"), "S_Regular_Highwind.filter")
-        elif variant == "S_Mapping_Highwind":
-            self.prep_dl_thread(Utility.read_from_ini("S_Mapping_Highwind", "url"), "S_Mapping_Highwind.filter")
-        elif variant == "S_Strict_Highwind":
-            self.prep_dl_thread(Utility.read_from_ini("S_Strict_Highwind", "url"), "S_Strict_Highwind.filter")
-        elif variant == "S_Very_Strict_Highwind":
-            self.prep_dl_thread(Utility.read_from_ini("S_Very_Strict_Highwind", "url"), "S_Very_Strict_Highwind.filter")
+        if variant == SMALL_REGULAR_FILTER:
+            self.prep_dl_thread(Utility.read_from_ini(SMALL_REGULAR_FILTER, "url"), SMALL_REGULAR_FILTER + ".filter")
+        elif variant == SMALL_MAPPING_FILTER:
+            self.prep_dl_thread(Utility.read_from_ini(SMALL_MAPPING_FILTER, "url"), SMALL_MAPPING_FILTER + ".filter")
+        elif variant == SMALL_STRICT_FILTER:
+            self.prep_dl_thread(Utility.read_from_ini(SMALL_STRICT_FILTER, "url"), SMALL_STRICT_FILTER + ".filter")
+        elif variant == SMALL_VERY_STRICT_FILTER:
+            self.prep_dl_thread(Utility.read_from_ini(SMALL_VERY_STRICT_FILTER, "url"), SMALL_VERY_STRICT_FILTER + ".filter")
         else:
             my_logger.error("download_highwind_filter. Unknown variant: " + variant)
 
