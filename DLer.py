@@ -39,6 +39,7 @@ SMALL_REGULAR_FILTER = "S1_Regular_Highwind"
 SMALL_MAPPING_FILTER = "S2_Mapping_Highwind"
 SMALL_STRICT_FILTER = "S3_Strict_Highwind"
 SMALL_VERY_STRICT_FILTER = "S4_Very_Strict_Highwind"
+CONFIG_URL_ADDRESS = "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/filterblast_config.txt"
 #  <- Constants
 
 # Globals ->
@@ -394,6 +395,35 @@ class Application:
         y = h / 2 - size[1] / 2
         toplevel.geometry("%dx%d+%d+%d" % (size + (x, y)))
 
+    def stylename_elements_options(self, stylename):
+        '''Function to expose the options of every element associated to a widget
+           stylename.'''
+        try:
+            # Get widget elements
+            style = ttk.Style()
+            layout = str(style.layout(stylename))
+            print('Stylename = {}'.format(stylename))
+            print('Layout    = {}'.format(layout))
+            elements = []
+            for n, x in enumerate(layout):
+                if x == '(':
+                    element = ""
+                    for y in layout[n + 2:]:
+                        if y != ',':
+                            element = element + str(y)
+                        else:
+                            elements.append(element[:-1])
+                            break
+            print('\nElement(s) = {}\n'.format(elements))
+
+            # Get options of widget elements
+            for element in elements:
+                print('{0:30} options: {1}'.format(element, style.element_options(element)))
+
+        except tk.TclError:
+            print('_tkinter.TclError: "{0}" in function'
+                  'widget_elements_options({0}) is not a regonised stylename.'.format(stylename))
+
     def __init__(self):
         self.root = tk.Tk()
 
@@ -403,7 +433,10 @@ class Application:
         self.frame = tk.Frame(self.root, bg="blue")
         tk.Label(self.frame, text="Welcome to Downloader. Click button below to download filter(s) and have them copied to POE filters folder", bg="blue", fg="white", font="Helvetica 12 bold").grid(row=0, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
-        self.progressbar = ttk.Progressbar(self.frame, length=650, maximum=100)
+        self.style = ttk.Style()
+        self.style.theme_use("default")
+        self.style.configure("black.Horizontal.TProgressbar", background="blue")
+        self.progressbar = ttk.Progressbar(self.frame, length=650, maximum=100, style="black.Horizontal.TProgressbar")
         self.progressbar.grid(row=1, column=0, columnspan=4, sticky=tk.N+tk.E+tk.W)
 
         self.downloadstatus_Label = tk.Label(self.frame, text="", bg="blue", fg="white")
@@ -418,7 +451,9 @@ class Application:
         self.download_highwind_very_strict = tk.Button(self.frame, text="Highwind very strict filter", command=lambda: self.download_highwind_filter(SMALL_VERY_STRICT_FILTER), state=tk.DISABLED, width=20, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.download_highwind_very_strict.grid(row=3, column=3, pady=15)
 
-        highwind_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
+        self.style.configure("Red.TLabelframe", background="blue", foreground="black")
+        self.style.configure("TLabelframe.Label", background="blue", foreground="white")
+        highwind_labelframe = ttk.LabelFrame(self.frame, text="Filter info", style="Red.TLabelframe")
         highwind_labelframe.grid(row=4, column=0, padx=4, pady=15, sticky=tk.N+tk.E+tk.W)
         self.highwind_last_mod_label = tk.Label(highwind_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
@@ -430,7 +465,7 @@ class Application:
         self.highwind_update_available_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_update_available_label.pack(fill=tk.X, side=tk.TOP)
         highwind_labelframe.grid_propagate(False)
-        highwind_mapping_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
+        highwind_mapping_labelframe = ttk.LabelFrame(self.frame, text="Filter info", style="Red.TLabelframe")
         highwind_mapping_labelframe.grid(row=4, column=1, padx=4, pady=15, sticky=tk.N+tk.E+tk.W)
         self.highwind_mapping_last_mod_label = tk.Label(highwind_mapping_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_mapping_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
@@ -442,7 +477,7 @@ class Application:
         self.highwind_mapping_update_available_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_mapping_update_available_label.pack(fill=tk.X, side=tk.TOP)
         highwind_mapping_labelframe.grid_propagate(False)
-        highwind_strict_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
+        highwind_strict_labelframe = ttk.LabelFrame(self.frame, text="Filter info", style="Red.TLabelframe")
         highwind_strict_labelframe.grid(row=4, column=2, padx=4, pady=15, sticky=tk.N+tk.E+tk.W)
         self.highwind_strict_last_mod_label = tk.Label(highwind_strict_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
@@ -454,7 +489,7 @@ class Application:
         self.highwind_strict_update_available_label.config(wraplength=100, justify=tk.LEFT, height=4)
         self.highwind_strict_update_available_label.pack(fill=tk.X, side=tk.TOP)
         highwind_strict_labelframe.grid_propagate(False)
-        highwind_very_strict_labelframe = ttk.LabelFrame(self.frame, text="Filter info")
+        highwind_very_strict_labelframe = ttk.LabelFrame(self.frame, text="Filter info", style="Red.TLabelframe")
         highwind_very_strict_labelframe.grid(row=4, column=3, padx=4, pady=15, sticky=tk.N+tk.E+tk.W)
         self.highwind_very_strict_last_mod_label = tk.Label(highwind_very_strict_labelframe, text="Last modified: Unknown", anchor="w", bg="blue", fg="white")
         self.highwind_very_strict_last_mod_label.config(wraplength=100, justify=tk.LEFT, height=4)
@@ -467,7 +502,7 @@ class Application:
         self.highwind_very_strict_update_available_label.pack(fill=tk.X, side=tk.TOP)
         highwind_very_strict_labelframe.grid_propagate(False)
 
-        local_filter_files_labelframe = ttk.LabelFrame(self.frame, text="Local Highwind filter files")
+        local_filter_files_labelframe = ttk.LabelFrame(self.frame, text="Local Highwind filter files", style="Red.TLabelframe")
         local_filter_files_labelframe.grid(row=5, column=0, columnspan=4, padx=4, pady=5, sticky=tk.N+tk.E+tk.W)
         self.highwind_last_modified_label = tk.Label(local_filter_files_labelframe, text="Your Highwind filter: Not found", bg="blue", fg="white")
         self.highwind_last_modified_label.config(justify=tk.LEFT)
@@ -491,6 +526,9 @@ class Application:
         self.stop_button = tk.Button(self.frame, text="Stop", command=lambda: self.stop_download_operation(self.down), state=tk.DISABLED, width=10, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.stop_button.grid(row=7, column=0, columnspan=4, pady=5)
 
+        # self.style = ttk.Style()
+        # self.style.theme_use("default")
+        # self.style.configure("black.Horizontal.TProgressbar", background="blue")
         self.statusbar_label = tk.Label(self.root, text="", bg="blue", fg="white", bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.statusbar_label.pack(side=tk.BOTTOM, fill=tk.X)
 
@@ -523,7 +561,21 @@ class Application:
 
         tools_menu.add_cascade(label="Background color", menu=background_menu)
 
-        # TODO add read from ini file operation related to background color
+        value = Utility.read_from_ini("General", "background_color")
+
+        if value == "" or value is None or value == "blue":
+            self.background_color.set(1)
+            Utility.update_ini_file("General", "background_color", 1, True)
+            self.change_color_in_frame("blue")
+        elif value == "red":
+            self.background_color.set(2)
+            self.change_color_in_frame("red")
+        elif value == "green":
+            self.background_color.set(3)
+            self.change_color_in_frame("green")
+        elif value == "black":
+            self.background_color.set(4)
+            self.change_color_in_frame("black")
 
         value = Utility.read_from_ini("General", "uitransparency")
 
@@ -584,24 +636,35 @@ class Application:
             Utility.update_ini_file("General", "uitransparency", 0.7, True)
 
     def change_color_in_frame(self, color):
+        self.frame.configure(bg=color)
+        self.statusbar_label.configure(bg=color, fg="white")
+
         for wid in self.frame.winfo_children():
             if wid.widgetName != "ttk::progressbar" and wid.widgetName != "ttk::labelframe":
                 wid.configure(bg=color)
             else:
-                if wid.widgetName == "ttk:labelframe":
-                    wid.configure(background=color)
-                elif wid.widgetName == "ttk:progressbar":
+                if wid.widgetName == "ttk::labelframe":
                     try:
-                        wid.configure(background=color)
-                    except e:
-                        print e
-                else:
-                    pass
+                        self.style = ttk.Style()
+                        self.style.theme_use("default")
+                        self.style.configure("TLabelframe.Label", background=color, foreground="white")
+                        self.style.configure("Red.TLabelframe", background=color)
+                    except:
+                        my_logger.error("Error occurred setting style to labelframe")
+                        sys.exit()
+
+                    for lwid in wid.winfo_children():
+                        lwid.configure(bg=color)
+                elif wid.widgetName == "ttk::progressbar":
+                    try:
+                        self.style = ttk.Style()
+                        self.style.theme_use("default")
+                        self.style.configure("black.Horizontal.TProgressbar", background=color)
+                    except:
+                        my_logger.error("Error occurred setting style to progressbar")
+                        sys.exit()
 
     def set_background_color(self):
-        self.show_msgbox("Unfinished", "This feature will be completed later on")
-        return
-
         value = self.background_color.get()
 
         if value == 1:
@@ -625,11 +688,9 @@ class Application:
             config_date_from_ini = Utility.read_from_ini("ConfigFile", "date")
             config_size_from_ini = Utility.read_from_ini("ConfigFile", "gzip_size")
 
-            config_url = "https://raw.githubusercontent.com/ffhighwind/PoE-Price-Lister/master/Resources/filterblast_config.txt"
-
-            config_etag = Utility.get_etag_in_url(config_url)
-            config_size = Utility.get_file_size_in_url(config_url)
-            config_date = Utility.get_last_modified_date_in_url(config_url)
+            config_etag = Utility.get_etag_in_url(CONFIG_URL_ADDRESS)
+            config_size = Utility.get_file_size_in_url(CONFIG_URL_ADDRESS)
+            config_date = Utility.get_last_modified_date_in_url(CONFIG_URL_ADDRESS)
 
             if config_etag_from_ini != config_etag and config_date_from_ini != config_date and config_size_from_ini != config_size:
                 Utility.update_ini_file("ConfigFile", "etag", config_etag, True)
@@ -637,7 +698,7 @@ class Application:
                 Utility.update_ini_file("ConfigFile", "gzip_size", config_size, True)
 
                 try:
-                    txt = urllib2.urlopen(config_url, timeout=240).read()
+                    txt = urllib2.urlopen(CONFIG_URL_ADDRESS, timeout=240).read()
 
                     regex = "\tPreset\s\"(?P<name>[\w\s]+)\"(\sDEFAULT){0,1}\s\[(?P<filename>[\w]+)\]\s\[(?P<url>[\w:/.-]+)\]"
                     matches = re.finditer(regex, txt, re.MULTILINE)
@@ -747,7 +808,7 @@ class Application:
 
     @staticmethod
     def set_content_to_label(variant, label):
-        path = Utility.poe_filter_directory() + "\\" +  variant + ".filter"
+        path = Utility.poe_filter_directory() + "\\" + variant + ".filter"
         if os.path.exists(path):
             mod_time = Utility.get_last_modified_date_in_file(path)
             label.config(text="Your " + variant + " filter file last modified time: %s" % time.ctime(mod_time))
