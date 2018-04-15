@@ -43,3 +43,7 @@ And see what python reports as an error (most likely the requests module is not 
 **Q**: What is makeExecutable.bat file?
 
 **A**: Old way to convert the DL2.py to executable by using pyinstaller. During the transition to use cx_freeze instead of the pyinstaller I've left the said batch file still to the repository - but its bound to removed.
+
+**Q**: What is twux64.exe?
+
+**A**: Its Installmate's updater. A console app, which is used to see if there is a new version available of the Downloader's installation setup file from my github downloader repository.
