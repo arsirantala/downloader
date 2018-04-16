@@ -32,7 +32,7 @@ import configparser
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.10"
+DLER_VERSION = "1.0.12"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT = 0
 SMALL_REGULAR_FILTER = "S1_Regular_Highwind"
@@ -350,7 +350,6 @@ class Downloader:
                     installed_file_sha1_value = None
                     if os.path.exists(installed_file_path):
                         installed_file_sha1_value = Utility.calculate_sha1(installed_file_path)
-
                     if dled_file_sha1_value != installed_file_sha1_value:
                         try:
                             copyfile(file_path, installed_file_path.encode("utf-8"))
@@ -363,6 +362,8 @@ class Downloader:
                         statusbar_label.config(text="The filter is the same as the older one")
                 else:
                     Utility.write_error("Error: POE filter directory doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
+
+                Utility.update_ini_file(dest.replace(".filter", ""), "DownloadedFileSha1", str(installed_file_sha1_value), True)
             else:
                 Utility.write_error("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
         else:
@@ -526,9 +527,6 @@ class Application:
         self.stop_button = tk.Button(self.frame, text="Stop", command=lambda: self.stop_download_operation(self.down), state=tk.DISABLED, width=10, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.stop_button.grid(row=7, column=0, columnspan=4, pady=5)
 
-        # self.style = ttk.Style()
-        # self.style.theme_use("default")
-        # self.style.configure("black.Horizontal.TProgressbar", background="blue")
         self.statusbar_label = tk.Label(self.root, text="", bg="blue", fg="white", bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.statusbar_label.pack(side=tk.BOTTOM, fill=tk.X)
 
@@ -537,7 +535,7 @@ class Application:
         self.root.config(menu=menubar)
 
         quit_menu = tk.Menu(menubar, tearoff=0)
-        quit_menu.add_command(label="Exit", command=self.root.quit)
+        quit_menu.add_command(label="Exit", command=self.exit_app)
         menubar.add_cascade(label="File", menu=quit_menu)
 
         tools_menu = tk.Menu(menubar, tearoff=0)
@@ -609,7 +607,7 @@ class Application:
         t = threading.Timer(2.0, self.update_labelframes_timer_tick)
         t.start()
 
-        self.root.protocol("WM_DELETE_WINDOW", self.root.quit)
+        self.root.protocol("WM_DELETE_WINDOW", self.exit_app)
 
         self.down = None
         self.center(self.root)
@@ -618,6 +616,9 @@ class Application:
         self.root.iconbitmap(default=Utility.resource_path("Highwind.ico"))
 
         self.root.mainloop()
+
+    def exit_app(self):
+        self.root.quit()
 
     def set_transparency(self):
         value = self.transparency.get()
@@ -680,8 +681,19 @@ class Application:
             self.change_color_in_frame("black")
             Utility.update_ini_file("General", "background_color", "black", True)
 
+    def update_sha1_for_local_filter_file_to_ini(self, filename, variant):
+        if os.path.exists(filename):
+            sha1 = Utility.calculate_sha1(filename)
+            Utility.update_ini_file(variant, "LocalFileSha1", str(sha1), True)
+
     def update_labelframes_timer_tick(self):
         self.statusbar_label.config(text="Checking for updates...")
+
+        poe_dir = Utility.poe_filter_directory()
+        self.update_sha1_for_local_filter_file_to_ini(poe_dir + "\\" + SMALL_REGULAR_FILTER + ".filter", SMALL_REGULAR_FILTER)
+        self.update_sha1_for_local_filter_file_to_ini(poe_dir + "\\" + SMALL_MAPPING_FILTER + ".filter", SMALL_MAPPING_FILTER)
+        self.update_sha1_for_local_filter_file_to_ini(poe_dir + "\\" + SMALL_STRICT_FILTER + ".filter", SMALL_STRICT_FILTER)
+        self.update_sha1_for_local_filter_file_to_ini(poe_dir + "\\" + SMALL_VERY_STRICT_FILTER + ".filter", SMALL_VERY_STRICT_FILTER)
 
         if Utility.have_internet():
             config_etag_from_ini = Utility.read_from_ini("ConfigFile", "etag")
@@ -748,14 +760,21 @@ class Application:
     def update_all_filters_files(self):
         self.update_all_filters.config(state="disabled")
 
-        self.download_highwind_filter(SMALL_REGULAR_FILTER)
-        self.root.update()
-        self.download_highwind_filter(SMALL_MAPPING_FILTER)
-        self.root.update()
-        self.download_highwind_filter(SMALL_STRICT_FILTER)
-        self.root.update()
-        self.download_highwind_filter(SMALL_VERY_STRICT_FILTER)
-        self.root.update()
+        if "MODIFIED" not in self.highwind_update_available_label.cget("text"):
+            self.download_highwind_filter(SMALL_REGULAR_FILTER)
+            self.root.update()
+
+        if "MODIFIED" not in self.highwind_mapping_update_available_label.cget("text"):
+            self.download_highwind_filter(SMALL_MAPPING_FILTER)
+            self.root.update()
+
+        if "MODIFIED" not in self.highwind_strict_update_available_label.cget("text"):
+            self.download_highwind_filter(SMALL_STRICT_FILTER)
+            self.root.update()
+
+        if "MODIFIED" not in self.highwind_very_strict_update_available_label.cget("text"):
+            self.download_highwind_filter(SMALL_VERY_STRICT_FILTER)
+            self.root.update()
 
         self.update_all_filters.config(state="normal")
 
@@ -789,14 +808,25 @@ class Application:
 
         if old_etag is not None and old_date is not None and old_size is not None:
             if len(old_etag) > 0 and len(old_date) > 0 and len(old_size) > 0:
+                local_sha1 = Utility.read_from_ini(variant, "localfilesha1")
+                dled_sha1 = Utility.read_from_ini(variant, "downloadedfilesha1")
+
                 if old_etag != etag and old_date != mod_time and old_size != length:
-                    updated_available_label.config(text="Update available: YES")
+                    if len(local_sha1) > 0 and len(dled_sha1):
+                        if local_sha1 != dled_sha1:
+                            updated_available_label.config(text="Update available: MODIFIED")
+                        else:
+                            updated_available_label.config(text="Update available: YES")
                 else:
                     path = Utility.poe_filter_directory() + "\\" + variant + ".filter"
                     if not os.path.exists(path):
                         updated_available_label.config(text="Update available: YES")
                     else:
-                        updated_available_label.config(text="Update available: NO")
+                        if len(local_sha1) > 0 and len(dled_sha1):
+                            if local_sha1 != dled_sha1:
+                                updated_available_label.config(text="Update available: MODIFIED")
+                            else:
+                                updated_available_label.config(text="Update available: NO")
             else:
                 updated_available_label.config(text="Update available: Unknown")
         else:
