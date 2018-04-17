@@ -876,18 +876,14 @@ class Application:
         self.update_all_filters.config(state="normal")
         self.root.update()
 
-    def show_msgbox(self, title, message, width=200, height=200, msgbox_type="info"):
-        window = tk.Tk()
-        window.wm_withdraw()
-
-        window.geometry(str(width) + "x" + str(height))
+    def show_msgbox(self, title, message, msgbox_type="info"):
 
         if msgbox_type == "info":
-            tkMessageBox.showinfo(title=title, message=message, parent=window)
+            tkMessageBox.showinfo(title=title, message=message)
         elif msgbox_type == "error":
-            tkMessageBox.showerror(title=title, message=message, parent=window)
+            tkMessageBox.showerror(title=title, message=message)
         elif msgbox_type == "warning":
-            tkMessageBox.showwarning(title=title, message=message, parent=window)
+            tkMessageBox.showwarning(title=title, message=message)
         else:
             my_logger.error("Unknown type was passed to showMsgBox method")
             return
@@ -911,11 +907,11 @@ class Application:
 
     def download_highwind_filter(self, variant):
         if not Utility.have_internet():
-            self.show_msgbox("No internet connection", "Sorry feature unavailable because of no internet connectivity", 200, 200, "error")
+            self.show_msgbox("No internet connection", "Sorry feature unavailable because of no internet connectivity", "error")
             return
 
         if not os.path.exists(Utility.poe_filter_directory()):
-            self.show_msgbox("POE filter directory doesn't exist!", "Make sure the \"Path of Exile\" directory exists in \"My Documents\"\\\"My Games\"!", 200, 200, "error")
+            self.show_msgbox("POE filter directory doesn't exist!", "Make sure the \"Path of Exile\" directory exists in \"My Documents\"\\\"My Games\"!", "error")
             return
 
         if variant == SMALL_REGULAR_FILTER:
@@ -934,7 +930,7 @@ class Application:
         if os.path.exists(path):
             subprocess.call(['explorer', path])
         else:
-            self.show_msgbox("Can't find POE filter directory", "The default POE filter directory doesn't exist!", 200, 200, "error")
+            self.show_msgbox("Can't find POE filter directory", "The default POE filter directory doesn't exist!", "error")
 
 
 if __name__ == "__main__":
