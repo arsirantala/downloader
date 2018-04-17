@@ -900,11 +900,7 @@ class Application:
         self.root.update()
 
     def about_downloader(self):
-        window = tk.Tk()
-        window.wm_withdraw()
-
-        window.geometry("1x1+200+200")
-        tkMessageBox.showinfo(title="About Downloader", message="Downloader V" + DLER_VERSION + "\n\nBy Ixoth\n\nCopyright (C) 2018", parent=window)
+        tkMessageBox.showinfo(title="About Highwind POE filters downloader...", message=u"Highwind POE filters downloader V%s\n\nBy Ixoth\n\nCopyright %s 2018" % (DLER_VERSION, u"\N{COPYRIGHT SIGN}"))
         self.root.update()
 
     def prep_dl_thread(self, url, filename):
