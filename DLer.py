@@ -742,6 +742,8 @@ class Application:
                     my_logger.error("While downloading the config file an exception: '%s' occurred", str(e))
             else:
                 my_logger.info("Config file has not changed. Not going to process it again")
+        else:
+            self.show_msgbox("No internet connection", "Sorry feature unavailable because of no internet connectivity", "error")
 
         self.update_labelframes(SMALL_REGULAR_FILTER)
         self.update_labelframes(SMALL_MAPPING_FILTER)
@@ -752,6 +754,7 @@ class Application:
         self.download_highwind_mapping.config(state="normal")
         self.download_highwind_strict.config(state="normal")
         self.download_highwind_very_strict.config(state="normal")
+
         self.check_updates.config(state="normal")
         self.update_all_filters.config(state="normal")
 
@@ -760,20 +763,24 @@ class Application:
     def update_all_filters_files(self):
         self.update_all_filters.config(state="disabled")
 
+        if not Utility.have_internet():
+            self.statusbar_label.config(text="There is no internet connection available!")
+            return
+
         if "MODIFIED" not in self.highwind_update_available_label.cget("text"):
-            self.download_highwind_filter(SMALL_REGULAR_FILTER)
+            self.download_highwind_filter(SMALL_REGULAR_FILTER, True)
             self.root.update()
 
         if "MODIFIED" not in self.highwind_mapping_update_available_label.cget("text"):
-            self.download_highwind_filter(SMALL_MAPPING_FILTER)
+            self.download_highwind_filter(SMALL_MAPPING_FILTER, True)
             self.root.update()
 
         if "MODIFIED" not in self.highwind_strict_update_available_label.cget("text"):
-            self.download_highwind_filter(SMALL_STRICT_FILTER)
+            self.download_highwind_filter(SMALL_STRICT_FILTER, True)
             self.root.update()
 
         if "MODIFIED" not in self.highwind_very_strict_update_available_label.cget("text"):
-            self.download_highwind_filter(SMALL_VERY_STRICT_FILTER)
+            self.download_highwind_filter(SMALL_VERY_STRICT_FILTER, True)
             self.root.update()
 
         self.update_all_filters.config(state="normal")
@@ -783,8 +790,10 @@ class Application:
         self.download_highwind_mapping.config(state="disabled")
         self.download_highwind_strict.config(state="disabled")
         self.download_highwind_very_strict.config(state="disabled")
+
         self.check_updates.config(state="disabled")
         self.update_all_filters.config(state="disabled")
+
         self.root.update()
 
         self.update_labelframes_timer_tick()
@@ -905,10 +914,11 @@ class Application:
         self.down = Downloader()
         self.down.download(url, filename, self.download_highwind, self.download_highwind_mapping, self.download_highwind_strict, self.download_highwind_very_strict, self.check_updates, self.update_all_filters, self.progressbar, self.downloadstatus_Label, self.stop_button, self.statusbar_label, self.root)
 
-    def download_highwind_filter(self, variant):
-        if not Utility.have_internet():
-            self.show_msgbox("No internet connection", "Sorry feature unavailable because of no internet connectivity", "error")
-            return
+    def download_highwind_filter(self, variant, no_msgbox = False):
+        if not no_msgbox:
+            if not Utility.have_internet():
+                self.show_msgbox("No internet connection", "Sorry feature unavailable because of no internet connectivity", "error")
+                return
 
         if not os.path.exists(Utility.poe_filter_directory()):
             self.show_msgbox("POE filter directory doesn't exist!", "Make sure the \"Path of Exile\" directory exists in \"My Documents\"\\\"My Games\"!", "error")
