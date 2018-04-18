@@ -7,6 +7,6 @@ if exist "%ProgramFiles%\InstallMate 7\BinX64\Tin.exe" (
     goto end
 )
 
-Tools\fnr.exe --cl --dir "%cd%\installer\Highwind POE filters downloader\InstallMate" --fileMask "Highwind POE filters downloader-Setup.txt" --find "InstallerPath=Highwind POE filters downloader-Setup.exe" --replace "InstallerPath=https://github.com/arsirantala/downloader/blob/master/installer/Highwind%20POE%20filters%20downloader/InstallMate/Highwind%20POE%20filters%20downloader-Setup.exe"
+Tools\fnr.exe --cl --dir "%cd%\installer" --fileMask "Downloader_Setup.txt" --find "Downloader_Setup.exe" --replace "InstallerPath=https://github.com/arsirantala/downloader/blob/master/installer/Downloader_Setup.exe"
 
 :end
