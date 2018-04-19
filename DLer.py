@@ -350,6 +350,8 @@ class Downloader:
                     installed_file_sha1_value = None
                     if os.path.exists(installed_file_path):
                         installed_file_sha1_value = Utility.calculate_sha1(installed_file_path)
+                        Utility.update_ini_file(dest.replace(".filter", ""), "DownloadedFileSha1", str(dled_file_sha1_value), True)
+
                     if dled_file_sha1_value != installed_file_sha1_value:
                         try:
                             copyfile(file_path, installed_file_path.encode("utf-8"))
@@ -362,8 +364,6 @@ class Downloader:
                         statusbar_label.config(text="The filter is the same as the older one")
                 else:
                     Utility.write_error("Error: POE filter directory doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
-
-                Utility.update_ini_file(dest.replace(".filter", ""), "DownloadedFileSha1", str(installed_file_sha1_value), True)
             else:
                 Utility.write_error("Error: the downloaded file: " + file_path + " doesn't exist!", statusbar_label, root, stop_button, download_highwind, download_highwind_mapping, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters)
         else:
@@ -395,35 +395,6 @@ class Application:
         x = w / 2 - size[0] / 2
         y = h / 2 - size[1] / 2
         toplevel.geometry("%dx%d+%d+%d" % (size + (x, y)))
-
-    def stylename_elements_options(self, stylename):
-        '''Function to expose the options of every element associated to a widget
-           stylename.'''
-        try:
-            # Get widget elements
-            style = ttk.Style()
-            layout = str(style.layout(stylename))
-            print('Stylename = {}'.format(stylename))
-            print('Layout    = {}'.format(layout))
-            elements = []
-            for n, x in enumerate(layout):
-                if x == '(':
-                    element = ""
-                    for y in layout[n + 2:]:
-                        if y != ',':
-                            element = element + str(y)
-                        else:
-                            elements.append(element[:-1])
-                            break
-            print('\nElement(s) = {}\n'.format(elements))
-
-            # Get options of widget elements
-            for element in elements:
-                print('{0:30} options: {1}'.format(element, style.element_options(element)))
-
-        except tk.TclError:
-            print('_tkinter.TclError: "{0}" in function'
-                  'widget_elements_options({0}) is not a regonised stylename.'.format(stylename))
 
     def __init__(self):
         self.root = tk.Tk()
@@ -681,7 +652,8 @@ class Application:
             self.change_color_in_frame("black")
             Utility.update_ini_file("General", "background_color", "black", True)
 
-    def update_sha1_for_local_filter_file_to_ini(self, filename, variant):
+    @staticmethod
+    def update_sha1_for_local_filter_file_to_ini(filename, variant):
         if os.path.exists(filename):
             sha1 = Utility.calculate_sha1(filename)
             Utility.update_ini_file(variant, "LocalFileSha1", str(sha1), True)
@@ -900,11 +872,7 @@ class Application:
         self.root.update()
 
     def about_downloader(self):
-        window = tk.Tk()
-        window.wm_withdraw()
-
-        window.geometry("1x1+200+200")
-        tkMessageBox.showinfo(title="About Downloader", message="Downloader V" + DLER_VERSION + "\n\nBy Ixoth\n\nCopyright (C) 2018", parent=window)
+        tkMessageBox.showinfo(title="About Highwind POE filters downloader...", message=u"Highwind POE filters downloader V%s\n\nBy Ixoth\n\nCopyright %s 2018" % (DLER_VERSION, u"\N{COPYRIGHT SIGN}"))
         self.root.update()
 
     def prep_dl_thread(self, url, filename):
@@ -914,7 +882,7 @@ class Application:
         self.down = Downloader()
         self.down.download(url, filename, self.download_highwind, self.download_highwind_mapping, self.download_highwind_strict, self.download_highwind_very_strict, self.check_updates, self.update_all_filters, self.progressbar, self.downloadstatus_Label, self.stop_button, self.statusbar_label, self.root)
 
-    def download_highwind_filter(self, variant, no_msgbox = False):
+    def download_highwind_filter(self, variant, no_msgbox=False):
         if not no_msgbox:
             if not Utility.have_internet():
                 self.show_msgbox("No internet connection", "Sorry feature unavailable because of no internet connectivity", "error")
