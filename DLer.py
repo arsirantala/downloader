@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-date: 17.4.2018
+date: 21.4.2018
 username: Ixoth
 description: Highwind POE filter Downloader
 TODO:
@@ -32,7 +32,7 @@ import configparser
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.16"
+DLER_VERSION = "1.0.17"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT = 0
 SMALL_REGULAR_FILTER = "S1_Regular_Highwind"
@@ -86,20 +86,18 @@ class Utility:
         return "%.*f%s" % (precision, size, suffixes[suffix_index])
 
     @staticmethod
-    def get_file_size_in_url(base_url):
-        return requests.get(base_url, stream=True).headers['Content-length']
-
-    @staticmethod
-    def get_etag_in_url(base_url):
-        return requests.get(base_url, stream=True).headers['ETag']
-
-    @staticmethod
-    def get_last_modified_date_in_url(base_url):
-        return requests.get(base_url, stream=True).headers['Date']
-
-    @staticmethod
     def get_last_modified_date_in_file(filepath):
         return os.path.getmtime(filepath)
+
+    @staticmethod
+    def get_info_from_url(base_url):
+        info = {}
+        response = requests.get(base_url, stream=True)
+        info["etag"] = response.headers["ETag"]
+        info["date"] = response.headers["Date"]
+        info["size"] = response.headers["Content-length"]
+
+        return info
 
     @staticmethod
     def calculate_sha1(filename):
@@ -672,9 +670,10 @@ class Application:
             config_date_from_ini = Utility.read_from_ini("ConfigFile", "date")
             config_size_from_ini = Utility.read_from_ini("ConfigFile", "gzip_size")
 
-            config_etag = Utility.get_etag_in_url(CONFIG_URL_ADDRESS)
-            config_size = Utility.get_file_size_in_url(CONFIG_URL_ADDRESS)
-            config_date = Utility.get_last_modified_date_in_url(CONFIG_URL_ADDRESS)
+            info_from_url = Utility.get_info_from_url(CONFIG_URL_ADDRESS)
+            config_etag = info_from_url["etag"]
+            config_size = info_from_url["size"]
+            config_date = info_from_url["date"]
 
             if config_etag_from_ini != config_etag and config_date_from_ini != config_date and config_size_from_ini != config_size:
                 Utility.update_ini_file("ConfigFile", "etag", config_etag, True)
@@ -772,16 +771,12 @@ class Application:
 
     @staticmethod
     def set_content_to_labelframes_labels(variant, url, size_label, mod_label, updated_available_label):
-        length = Utility.get_file_size_in_url(url)
+        info_from_url = Utility.get_info_from_url(url)
 
-        if length == "Unknown":
-            return
-
-        length = long(length)
-        size_label.config(text=Utility.file_size(length) + " (gziped)")
-        mod_time = Utility.get_last_modified_date_in_url(url)
+        size_label.config(text=Utility.get_human_readable(long(info_from_url["size"])) + " (gziped)")
+        mod_time = info_from_url["date"]
         mod_label.config(text=Utility.modified_date(mod_time))
-        etag = Utility.get_etag_in_url(url)
+        etag = info_from_url["etag"]
 
         old_etag = Utility.read_from_ini(variant, "etag")
         old_date = Utility.read_from_ini(variant, "date")
