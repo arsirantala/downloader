@@ -32,7 +32,7 @@ import configparser
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.17"
+DLER_VERSION = "1.0.18"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT = 0
 SMALL_REGULAR_FILTER = "S1_Regular_Highwind"
@@ -777,6 +777,7 @@ class Application:
         mod_time = info_from_url["date"]
         mod_label.config(text=Utility.modified_date(mod_time))
         etag = info_from_url["etag"]
+        length = info_from_url["size"]
 
         old_etag = Utility.read_from_ini(variant, "etag")
         old_date = Utility.read_from_ini(variant, "date")
@@ -788,7 +789,7 @@ class Application:
                 dled_sha1 = Utility.read_from_ini(variant, "downloadedfilesha1")
 
                 if old_etag != etag and old_date != mod_time and old_size != length:
-                    if len(local_sha1) > 0 and len(dled_sha1):
+                    if local_sha1 is not None and dled_sha1 is not None:
                         if local_sha1 != dled_sha1:
                             updated_available_label.config(text="Update available: MODIFIED")
                         else:
@@ -798,7 +799,7 @@ class Application:
                     if not os.path.exists(path):
                         updated_available_label.config(text="Update available: YES")
                     else:
-                        if len(local_sha1) > 0 and len(dled_sha1):
+                        if local_sha1 is not None and dled_sha1 is not None:
                             if local_sha1 != dled_sha1:
                                 updated_available_label.config(text="Update available: MODIFIED")
                             else:
