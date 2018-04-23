@@ -3154,14 +3154,14 @@ project Flags=0x20 {
 						}
 						folder ProgramGroupFolder: Flags=0x0, Traits=0x80000000, InstallAction=0, RemoveAction=1 {
 							str Name: Default="<ProductName>";
-							shlink Shortcut1_CA41A9A589D51BC2: Flags=0x0, TargetPath="<#Downloader.exe_B1CF683C5B5B4C18>", WorkDir="<ProductAppDataFolder>", IconIndex=0, ShowCmd=0 {
-								str Title: Default="<ProductName>";
-								str Description: Default="<ProductName>";
-							}
 							shlink Shortcut1_CA41A9A589D51BC2: Flags=0x0, TargetPath="<#twux64.exe_D0433367F251776E>", WorkDir="<ProductAppDataFolder>", IconIndex=0, ShowCmd=0 {
 								str Title: Default="Check for updates for <ProductName>";
 								str Description: Default="Check for updates for <ProductName>";
 								str Arguments: Default="https://raw.githubusercontent.com/arsirantala/downloader/master/installer/Downloader_Setup.txt /p:Downloader.exe";
+							}
+							shlink Shortcut1_CA41A9A589D51BC2: Flags=0x0, TargetPath="<#Downloader.exe_B1CF683C5B5B4C18>", WorkDir="<ProductAppDataFolder>", IconIndex=0, ShowCmd=0 {
+								str Title: Default="<ProductName>";
+								str Description: Default="<ProductName>";
 							}
 							shlink Shortcut2_59748E29E0438698: Flags=0x0, TargetPath="<TinProductFolder>\\Setup.exe", WorkDir="<TinProductFolder>", IconIndex=0, ShowCmd=0 {
 								str Title: Default="Uninstall <ProductName>";

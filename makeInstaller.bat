@@ -1,7 +1,7 @@
 @echo off
 
-if exist "%ProgramFiles%\InstallMate 7\BinX64\Tin.exe" (
-    "%ProgramFiles%\InstallMate 7\BinX64\Tin.exe" "%cd%\installer\Highwind POE filters downloader.im7" /build
+if exist "%ProgramFiles%\InstallMate 9\BinX64\Tin.exe" (
+    "%ProgramFiles%\InstallMate 9\BinX64\Tin.exe" "%cd%\installer\Highwind POE filters downloader.im9" /build
 ) else (
     echo "Tin.exe could not be found"
     goto end
