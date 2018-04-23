@@ -32,7 +32,7 @@ import configparser
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.18"
+DLER_VERSION = "1.0.19"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT = 0
 SMALL_REGULAR_FILTER = "S1_Regular_Highwind"
@@ -62,6 +62,14 @@ class Utility:
     # From http://stackoverflow.com/questions/5194057/better-way-to-convert-file-sizes-in-python
     def __init__(self):
         pass
+
+    @staticmethod
+    def check_for_updates(path):
+        if os.path.exists(path):
+            # args = ["https://raw.githubusercontent.com/arsirantala/downloader/master/installer/Downloader_Setup.txt", "/p:Downloader.exe"]
+            subprocess.call([path, "https://raw.githubusercontent.com/arsirantala/downloader/master/installer/Downloader_Setup.txt", "/p:Downloader.exe"])
+        else:
+            tkMessageBox.showerror("Updater can't be found from script directory", "Make sure that twux64.exe is in the same directory where the script is!")
 
     @staticmethod
     def write_error(msg, statusbar_label, root, stop_button, download_highwind, download_highwind_mapper, download_highwind_strict, download_highwind_very_strict, check_updates, update_all_filters):
@@ -566,6 +574,8 @@ class Application:
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="Show Downloader's home page at github", command=lambda: Utility.downloader_homepage())
         help_menu.add_command(label="Show Highwind filter thread at Path of Exile's forums", command=lambda: Utility.highwind_filter_poe_forums())
+        help_menu.add_separator()
+        help_menu.add_command(label="Check if there is updates available", command=lambda: Utility.check_for_updates(os.path.dirname(sys.argv[0]).replace(".py", ".ini").replace(".exe", ".ini") + "\\twux64.exe"))
         help_menu.add_separator()
         help_menu.add_command(label="About Downloader", command=lambda: self.about_downloader())
         menubar.add_cascade(label="Help", menu=help_menu)
