@@ -6,11 +6,8 @@ download_highwind.bat
 *.out
 Downloader-cache/
 EFS0.TMP
-<<<<<<< HEAD
 Downloader/
 Highwind POE filters downloader.log
 *.ini
-Downloader/PROJECT_ASSISTANT/SINGLE_EXE_IMAGE/LogFiles/
-Downloader/PROJECT_ASSISTANT/SINGLE_EXE_IMAGE/Reports/
-Downloader/PROJECT_ASSISTANT/Interm/
 DownloaderConsole.spec
+installer/Highwind POE filters downloader_PackList.txt
