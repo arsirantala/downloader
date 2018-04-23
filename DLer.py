@@ -32,7 +32,7 @@ import configparser
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.18"
+DLER_VERSION = "1.0.19"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT = 0
 SMALL_REGULAR_FILTER = "S1_Regular_Highwind"
