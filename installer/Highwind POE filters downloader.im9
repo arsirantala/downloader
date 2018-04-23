@@ -689,7 +689,9 @@ project Flags=0x20 {
 			str Value: Default=Homebrew;
 		}
 		var QuickLaunchFolder: Flags=0x264, Type=1, Description="Current User Quick Launch folder" {
-			str Value: PhraseID=Folder.QuickLaunch.User, Default="<$shpath({52A4F021-7B75-48A9-9F6B-4B87A210BC8F})=_LocQuickLaunchFolder>";
+			str Value: Flags=0x10000, PhraseID=Folder.QuickLaunch.User, Default="<ProfileFolder>\\Quick Launch" {
+				xlat ID=1033 {"<ProfileFolder>\\Quick Launch"}
+			}
 		}
 		var RecentFolder: Flags=0x244, Type=1, Description="Current User Recent Documents folder" {
 			str Value: Default="<$shpath(8)=@<ShellFoldersCU>\\Recent=_LocRecentFolder>";
@@ -3726,7 +3728,7 @@ project Flags=0x20 {
 	}
 	richtexts {
 		rtf License: {"{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat{\\fonttbl{\\f0\\fnil\\fcharset0 MS Shell Dlg;}}\r\n{\\*\\generator Riched20 10.0.16299}\\viewkind4\\uc1 \r\n\\pard\\f0\\fs17\\lang1035 LICENSE AGREEMENT\\par\r\n\\par\r\nTODO - Replace this text with your own license agreement to which the customer should agree prior to installation of your product.\\par\r\n\\par\r\nInstallMate will display this text prior to the installation process proper, and will cancel the process if the customer does not agree to its terms.\\par\r\n}\r\n"}
-		rtf Readme: {"{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat{\\fonttbl{\\f0\\fnil\\fcharset0 MS Shell Dlg;}}\r\n{\\*\\generator Riched20 10.0.16299}\\viewkind4\\uc1 \r\n\\pard\\f0\\fs17\\lang1035 README INFORMATION\\par\r\n\\par\r\nThis setup program will install Highwind POE filters downloader to your computer. With the downloader you download the filter files to the Path of Exile game.\\par\r\n\\par\r\nYou need an internet connection - the Highwind POE filter files are downloaded by the downloader from his github repository.\\par\r\n\\par\r\nAll credits of the filters goto ffhighwind (nick in the github).\\par\r\n\\par\r\nDisclaimer: This program is fan-made and not affiliated with Grinding Gear Games in any way. Path of Exile content and materials are trademarks and copyrights of Grinding Gear Games or its licensors. All rights reserved.\\par\r\n}\r\n"}
+		rtf Readme: {"{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat{\\fonttbl{\\f0\\fnil\\fcharset0 MS Shell Dlg;}}\r\n{\\*\\generator Riched20 10.0.16299}\\viewkind4\\uc1 \r\n\\pard\\b\\f0\\fs17\\lang1035 README INFORMATION\\par\r\n\\b0\\par\r\nThis setup program will install Highwind POE filters downloader to your computer. With the downloader you download the filter files to the Path of Exile game.\\par\r\n\\par\r\nYou need an internet connection - the Highwind POE filter files are downloaded by the downloader from ffhighwind\'s github repository.\\par\r\n\\par\r\nAll credits of the filter files goto ffhighwind.\\par\r\n\\par\r\n\\b Disclaimer\\b0 : This program is fan-made and not affiliated with Grinding Gear Games in any way. Path of Exile content and materials are trademarks and copyrights of Grinding Gear Games or its licensors. All rights reserved.\\par\r\n}\r\n"}
 	}
 	fontstyles Default=DefaultUIFont {
 		style BoldFont: Flags=0x0 {
