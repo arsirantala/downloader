@@ -285,13 +285,13 @@ project Flags=0x20 {
 			str Value: Default=Downloader_Setup;
 		}
 		var BuildDate: Flags=0x5, Type=0, Description="Build date as YYYYMMDD" {
-			str Value: Default=20180423;
+			str Value: Default=20180425;
 		}
 		var BuildDayNo: Flags=0x5, Type=0, Description="Build day number, starting from 1 January 2000" {
-			str Value: Default=6688;
+			str Value: Default=6690;
 		}
 		var BuildFolder: Flags=0x5, Type=1, Description="Folder containing the build target" {
-			str Value: Default="C:\\Users\\admin\\Documents\\Downloader\\installer";
+			str Value: Default="C:\\Users\\arsir\\Documents\\Downloader\\installer";
 		}
 		var BuildName: Flags=0x5, Type=0, Description="Build configuration name" {
 			str Value: Default=InstallMate;
@@ -300,10 +300,10 @@ project Flags=0x20 {
 			str Value: Default="Serial# 0D60C39372C7D2F6-04010108";
 		}
 		var BuildTarget: Flags=0x5, Type=1, Description="Build target file path" {
-			str Value: Default="C:\\Users\\admin\\Documents\\Downloader\\installer\\Downloader_Setup.exe";
+			str Value: Default="C:\\Users\\arsir\\Documents\\Downloader\\installer\\Downloader_Setup.exe";
 		}
 		var BuildTime: Flags=0x5, Type=0, Description="Build time as HHMMSS" {
-			str Value: Default=182959;
+			str Value: Default=191635;
 		}
 		var BuildType: Flags=0x5, Type=0, Description="Build type: always TSU" {
 			str Value: Default=TSU;
@@ -611,7 +611,7 @@ project Flags=0x20 {
 			str Value: Default="<MSOfficeDir14=MSOfficeDir12=MSOfficeDir11=MSOfficeDir10=MSOfficeDir9=MSOfficeDir8=!<ProgramFilesFolder>\\Microsoft Office\\Office>";
 		}
 		var PackageCode: Flags=0x205, Type=0, Description="Distribution package GUID" {
-			str Value: Default="{F982DB6B-5739-4D42-446F-6FB495BE4499}";
+			str Value: Default="{9FF002C0-9A05-416D-4840-A288F3CC9D32}";
 		}
 		var PersonalFolder: Flags=0x244, Type=1, Description="Current User Documents folder" {
 			str Value: Default="<$shpath(5)=@<ShellFoldersCU>\\Personal=_LocPersonalFolder>";
@@ -648,7 +648,7 @@ project Flags=0x20 {
 			str Value: Default="Highwind POE filters downloader";
 		}
 		var ProductVersion: Flags=0x204, Type=0, Description="Product version" {
-			str Value: Default="1.0.20";
+			str Value: Default="1.0.21";
 		}
 		var ProfileFolder: Flags=0x244, Type=1, Description="Current User profile base folder" {
 			str Value: Default="<$syspath(7)=$shpath(40)=%USERPROFILE=_LocProfileFolder>";
@@ -674,13 +674,13 @@ project Flags=0x20 {
 			str Value: Default="<$shpath(2)=@<ShellFoldersCU>\\Programs=_LocProgramMenuFolder>";
 		}
 		var ProjectFolder: Flags=0x5, Type=1, Description="Folder containing the InstallMate project file" {
-			str Value: Default="C:\\Users\\admin\\Documents\\Downloader\\installer";
+			str Value: Default="C:\\Users\\arsir\\Documents\\Downloader\\installer";
 		}
 		var ProjectName: Flags=0x5, Type=0, Description="InstallMate project file base name" {
 			str Value: Default="Highwind POE filters downloader";
 		}
 		var ProjectPath: Flags=0x5, Type=1, Description="Fully qualified path to the InstallMate project file" {
-			str Value: Default="C:\\Users\\admin\\Documents\\Downloader\\installer\\Highwind POE filters downloader.im9";
+			str Value: Default="C:\\Users\\arsir\\Documents\\Downloader\\installer\\Highwind POE filters downloader.im9";
 		}
 		var PublicFolder: Flags=0x244, Type=1, Description="Public (All Users shared) root folder" {
 			str Value: Default="<$shpath({DFDF76A2-C82A-4D63-906A-5644AC457385})=CommonProfileFolder>";
@@ -769,7 +769,7 @@ project Flags=0x20 {
 			str Value: Default="<$sysval(4)>";
 		}
 		var SessionID: Flags=0x204, Type=0, Description="Pseudo-random 8-character session identifier" {
-			str Value: Default="928F6E0B";
+			str Value: Default="92C4D633";
 		}
 		var ShellFoldersCU: Flags=0x20C, Type=2, Description="Current User Shell folders registry key" {
 			str Value: Default="<HKCU>\\<WinCurVer>\\Explorer\\Shell Folders";
@@ -899,10 +899,10 @@ project Flags=0x20 {
 		}
 		var UIRunAppArgs: Flags=0x204, Type=0, Description="Arguments for <UIRunAppPath>";
 		var UIRunAppDir: Flags=0x204, Type=0, Description="Start folder for <UIRunAppPath>" {
-			str Value: Default="<ProductAppDataFolder>";
+			str Value: Default="<LocalProductAppDataFolder>";
 		}
 		var UIRunAppPath: Flags=0x204, Type=0, Description="Application to start after installation" {
-			str Value: Default="<ProductAppDataFolder>\\Downloader.exe";
+			str Value: Default="<LocalProductAppDataFolder>\\Downloader.exe";
 		}
 		var UIShowRunApp: Flags=0x204, Type=0, Description="Controls whether to show the Start application checkbox" {
 			str Value: Default=1;
