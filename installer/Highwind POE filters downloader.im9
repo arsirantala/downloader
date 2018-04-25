@@ -626,7 +626,7 @@ project Flags=0x20 {
 			str Value: Default="<TempFolder>\\<SessionID>";
 		}
 		var PRIMARYFOLDER: Flags=0x204, Type=0, Description="Name of the primary installation folder symbol" {
-			str Value: Default=ProductAppDataFolder;
+			str Value: Default=LocalProductAppDataFolder;
 		}
 		var PrimaryVolumePath: Flags=0x206, Type=1, Description="Volume containing the primary installation folder";
 		var PrimaryVolumeSpaceAvailable: Flags=0x206, Type=0, Description="Available disk space on primary installation volume";
@@ -3003,18 +3003,6 @@ project Flags=0x20 {
 						str Name: Default="<Publisher>";
 						folder ProductAppDataFolder: Flags=0x0, Traits=0x80000000, InstallAction=0, RemoveAction=1 {
 							str Name: Default="<ProductName>";
-							file Downloader.exe_B1CF683C5B5B4C18: Flags=0x0, Component=ADDED_20180414161805, Path="..\\dist\\Downloader.exe", Attributes=0x0, InstallAction=4, RemoveAction=2, Registration=0, RegOrder=2000, Packaging=0 {
-								str Name: Default=Downloader.exe;
-							}
-							file File2_765374218A404506: Flags=0x0, Attributes=0x0, InstallAction=6, RemoveAction=2, Registration=0, RegOrder=0, Packaging=0 {
-								str Name: Default=Downloader.ini;
-							}
-							file File3_DBDB420BE4E09380: Flags=0x0, Attributes=0x0, InstallAction=6, RemoveAction=2, Registration=0, RegOrder=0, Packaging=0 {
-								str Name: Default=Downloader.out;
-							}
-							file twux64.exe_D0433367F251776E: Flags=0x0, Component=amd64_Tarma.WebUpdate_1.0.0.0_none_86C8DE3AC28A0518, Path=twux64.exe, Attributes=0x0, InstallAction=4, RemoveAction=2, Registration=0, RegOrder=2000, Packaging=0 {
-								str Name: Default=twux64.exe;
-							}
 						}
 					}
 					folder MSAppDataFolder: Flags=0x0, Traits=0x80000000, InstallAction=0, RemoveAction=0 {
@@ -3072,10 +3060,19 @@ project Flags=0x20 {
 							xlat ID=1033 {"History"}
 						}
 					}
-					folder LocalCompanyAppDataFolder: Flags=0x0, Traits=0x80000000, InstallAction=0, RemoveAction=1 {
-						str Name: Default="<Publisher>";
-						folder LocalProductAppDataFolder: Flags=0x0, Traits=0x80000000, InstallAction=0, RemoveAction=1 {
-							str Name: Default="<ProductName>";
+					folder LocalProductAppDataFolder: Flags=0x0, Traits=0x80000000, InstallAction=0, RemoveAction=1 {
+						str Name: Default="<ProductName>";
+						file Downloader.exe_B1CF683C5B5B4C18: Flags=0x0, Component=ADDED_20180414161805, Path="..\\dist\\Downloader.exe", Attributes=0x0, InstallAction=4, RemoveAction=2, Registration=0, RegOrder=2000, Packaging=0 {
+							str Name: Default=Downloader.exe;
+						}
+						file File2_765374218A404506: Flags=0x0, Attributes=0x0, InstallAction=6, RemoveAction=2, Registration=0, RegOrder=0, Packaging=0 {
+							str Name: Default=Downloader.ini;
+						}
+						file File3_DBDB420BE4E09380: Flags=0x0, Attributes=0x0, InstallAction=6, RemoveAction=2, Registration=0, RegOrder=0, Packaging=0 {
+							str Name: Default=Downloader.out;
+						}
+						file twux64.exe_D0433367F251776E: Flags=0x0, Component=amd64_Tarma.WebUpdate_1.0.0.0_none_86C8DE3AC28A0518, Path=twux64.exe, Attributes=0x0, InstallAction=4, RemoveAction=2, Registration=0, RegOrder=2000, Packaging=0 {
+							str Name: Default=twux64.exe;
 						}
 					}
 				}
