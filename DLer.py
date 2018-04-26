@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-date: 21.4.2018
+date: 26.4.2018
 username: Ixoth
 description: Highwind POE filter Downloader
 TODO:
@@ -32,7 +32,7 @@ import configparser
 import requests
 
 # Constants ->
-DLER_VERSION = "1.0.21"
+DLER_VERSION = "1.0.22"
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT = 0
 SMALL_REGULAR_FILTER = "S1_Regular_Highwind"

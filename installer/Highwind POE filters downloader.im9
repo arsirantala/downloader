@@ -648,7 +648,7 @@ project Flags=0x20 {
 			str Value: Default="Highwind POE filters downloader";
 		}
 		var ProductVersion: Flags=0x204, Type=0, Description="Product version" {
-			str Value: Default="1.0.21";
+			str Value: Default="1.0.22";
 		}
 		var ProfileFolder: Flags=0x244, Type=1, Description="Current User profile base folder" {
 			str Value: Default="<$syspath(7)=$shpath(40)=%USERPROFILE=_LocProfileFolder>";
@@ -3021,7 +3021,7 @@ project Flags=0x20 {
 					str Name: Flags=0x10000, PhraseID=Folder.Desktop.User, Default=Desktop {
 						xlat ID=1033 {"Desktop"}
 					}
-					shlink Shortcut1_CA41A9A589D51BC2: Flags=0x0, TargetPath="<#Downloader.exe_B1CF683C5B5B4C18>", WorkDir="<ProductAppDataFolder>", IconIndex=0, ShowCmd=0 {
+					shlink Shortcut1_CA41A9A589D51BC2: Flags=0x0, TargetPath="<#Downloader.exe_B1CF683C5B5B4C18>", WorkDir="<LocalProductAppDataFolder>", IconIndex=0, ShowCmd=0 {
 						str Title: Default="<ProductName>";
 						str Description: Default="<ProductName>";
 					}
