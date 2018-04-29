@@ -392,6 +392,10 @@ def goodbye():
 
 
 class Application:
+    def handle_click(self, event):
+        # if self.tree.identify_region(event.x, event.y) == "separator":
+        return "break"
+
     @staticmethod
     def center(toplevel):
         toplevel.update_idletasks()
@@ -503,6 +507,31 @@ class Application:
 
         self.stop_button = tk.Button(self.frame, text="Stop", command=lambda: self.stop_download_operation(self.down), state=tk.DISABLED, width=10, bg="blue", fg="white", activebackground="blue", highlightbackground="blue", disabledforeground="black", padx=5, pady=5)
         self.stop_button.grid(row=7, column=0, columnspan=4, pady=5)
+
+        # Set the treeview
+        self.tree = ttk.Treeview(self.frame, columns=("", "", "", "", "", ""))
+        self.tree.heading("#0", text="Filter")
+        self.tree.heading("#1", text="Size")
+        self.tree.heading("#2", text="Modification Date (in server)")
+        self.tree.heading("#3", text="Size (gzipped)")
+        self.tree.heading("#4", text="Update available")
+        self.tree.heading("#5", text="Modification Date (local file)")
+        self.tree.column("#0", stretch=tk.YES, anchor=tk.CENTER)
+        self.tree.column("#1", stretch=tk.YES, anchor=tk.CENTER)
+        self.tree.column('#2', stretch=tk.YES, anchor=tk.CENTER)
+        self.tree.column("#3", stretch=tk.YES, anchor=tk.CENTER)
+        self.tree.column("#4", stretch=tk.YES, anchor=tk.CENTER)
+        self.tree.column("#5", stretch=tk.YES, anchor=tk.CENTER)
+        self.tree.grid(row=8, column=0, columnspan=3, sticky="nsew", padx=5)
+        self.tree.insert("", "end", text="Regular", values=("Small", "", "", "Unknown", ""))
+        self.tree.insert("", "end", text="Mapping", values=("Small", "", "", "Unknown", ""))
+        self.tree.insert("", "end", text="Strict", values=("Small", "", "", "Unknown", ""))
+        self.tree.insert("", "end", text="Very Strict", values=("Small", "", "", "Unknown", ""))
+        self.tree.insert("", "end", text="Regular", values=("Large", "", "", "Unknown", ""))
+        self.tree.insert("", "end", text="Mapping", values=("Large", "", "", "Unknown", ""))
+        self.tree.insert("", "end", text="Strict", values=("Large", "", "", "Unknown", ""))
+        self.tree.insert("", "end", text="Very Strict", values=("Large", "", "", "Unknown", ""))
+        self.tree.bind('<Button-1>', self.handle_click)
 
         self.statusbar_label = tk.Label(self.root, text="", bg="blue", fg="white", bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.statusbar_label.pack(side=tk.BOTTOM, fill=tk.X)
@@ -620,8 +649,11 @@ class Application:
         self.statusbar_label.configure(bg=color, fg="white")
 
         for wid in self.frame.winfo_children():
-            if wid.widgetName != "ttk::progressbar" and wid.widgetName != "ttk::labelframe":
-                wid.configure(bg=color)
+            if wid.widgetName != "ttk::progressbar" and wid.widgetName != "ttk::labelframe" and wid.widgetName != "ttk::treeview":
+                try:
+                    wid.configure(bg=color)
+                except:
+                    my_logger.error("Error occurred setting style to widget: %s" % wid.widgetName)
             else:
                 if wid.widgetName == "ttk::labelframe":
                     try:
