@@ -7,6 +7,6 @@ if exist "%ProgramFiles%\InstallMate 9\BinX64\Tin.exe" (
     goto end
 )
 
-Tools\fnr.exe --cl --dir "%cd%\installer" --fileMask "Downloader_Setup.txt" --find "InstallerPath=Downloader_Setup.exe" --replace "InstallerPath=https://github.com/arsirantala/downloader/raw/master/installer/Downloader_Setup.exe"
+Tools\fnr.exe --cl --dir "%cd%\installer" --fileMask "Downloader_Setup.txt" --find "InstallerPath=Downloader_Setup.exe" --replace "InstallerPath=https://raw.githubusercontent.com/arsirantala/downloader/master/installer/Downloader_Setup.exe"
 
 :end
